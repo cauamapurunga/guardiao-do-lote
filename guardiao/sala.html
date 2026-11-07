@@ -78,6 +78,7 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 .call{font-size:11.5px;background:#f3f2ee;border:1px solid var(--line);border-radius:9px;padding:8px 9px;color:var(--mut);min-height:52px;word-break:break-word}
 .call .fn{color:var(--c);font-weight:600} .call .arg{color:var(--txt)}
 .call .tag{float:right;font-family:Inter;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px}
+.dec{margin-top:8px;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px}.dec.ok{background:#e6f4ec;color:#1f8a55}.dec.no{background:#fbe9e9;color:#d93a3a}.dec.wait{background:#faf2dc;color:#a8740a}
 .tag.auto{background:#e6f4ec;color:var(--green)} .tag.aprovacao{background:#faf2dc;color:var(--amber)} .tag.humano{background:#faf2dc;color:var(--amber)}
 .ameta{display:flex;gap:12px;color:var(--dim);font-size:11px;margin-top:auto}
 .ameta b{color:var(--txt)}
@@ -133,7 +134,7 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
     <div class="card">
       <div class="h">Lote em conferência <span id="pct" class="mono">0%</span></div>
       <div class="lote-nome mono" id="lNome">aguardando</div>
-      <div class="lote-meta" id="lMeta">Aperte Iniciar para a Sentinela abrir o primeiro lote.</div>
+      <div class="lote-meta" id="lMeta">Aperte Iniciar para o Maestro abrir o primeiro lote.</div>
       <div class="grid" id="grid"></div>
       <div class="leg"><span><i style="background:#1f5e40"></i>ok</span><span><i style="background:var(--red)"></i>retido</span><span><i style="background:var(--line)"></i>na fila</span></div>
       <div class="stat">
@@ -145,8 +146,8 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 
     <div class="card room" id="room">
       <svg class="wires" id="wires"></svg>
-      <div class="agent sent" id="ag-Sentinela" style="--c:var(--sent)">
-        <div class="ahead"><img class="av" src="/assets/agentes/sentinela.png" alt=""><div><div class="an">Sentinela</div><div class="ar">orquestrador · abre lotes e despacha</div></div><span class="st">ocioso</span></div>
+      <div class="agent sent" id="ag-Maestro" style="--c:var(--sent)">
+        <div class="ahead"><img class="av" src="/assets/agentes/sentinela.png" alt=""><div><div class="an">Maestro</div><div class="ar">orquestrador · abre lotes e despacha</div></div><span class="st">ocioso</span></div>
         <div class="think"></div>
       </div>
       <div class="agents">
@@ -199,7 +200,7 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 <script>
 const D = __DATA__;
 const E = D.eventos;
-const COR = {Sentinela:'#111111', Analista:'#3060d0', Auditor:'#d93a3a', Leitor:'#7a5ad6', Humano:'#b07a00'};
+const COR = {Maestro:'#111111', Analista:'#3060d0', Auditor:'#d93a3a', Leitor:'#7a5ad6', Humano:'#b07a00'};
 const brl = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
 const $ = id => document.getElementById(id);
 let i=0, speed=2, playing=false, timer=null;
@@ -210,7 +211,7 @@ const nL = E.filter(e=>e.t==='lote_abre').length;
 $('lotes').innerHTML = Array.from({length:nL},()=>'<i></i>').join('');
 
 function wires(active){
-  const room=$('room').getBoundingClientRect(); const s=$('ag-Sentinela').getBoundingClientRect();
+  const room=$('room').getBoundingClientRect(); const s=$('ag-Maestro').getBoundingClientRect();
   const x0=s.left+s.width/2-room.left, y0=s.bottom-room.top;
   let h='';
   ['Analista','Auditor','Leitor'].forEach(n=>{
@@ -256,12 +257,12 @@ function run(e){
     $('grid').innerHTML=e.titulos.map(t=>`<span title="${t}${e.flag[t]?' — '+e.flag[t]:''}" data-t="${t}"></span>`).join('');
     $('pct').textContent='0%';
     const dots=$('lotes').children; for(let k=0;k<dots.length;k++){dots[k].className = k<S.lotesFeitos?'on':(k===S.lotesFeitos?'cur':'');}
-    setOn('Sentinela','abrindo lote'); wires(); tick(3);
-    log('Sentinela','listar_agenda_remessa',`${e.lote} · ${e.n} títulos · ${brl(e.valor)}`);
+    setOn('Maestro','abrindo lote'); wires(); tick(3);
+    log('Maestro','listar_agenda_remessa',`${e.lote} · ${e.n} títulos · ${brl(e.valor)}`);
   }
   else if(e.t==='pensa'){
     setOn(e.agente, 'pensando'); type($('ag-'+e.agente).querySelector('.think'), e.texto, dur*0.8/speed);
-    if(e.agente!=='Sentinela') wires([e.agente]); tick(1);
+    if(e.agente!=='Maestro') wires([e.agente]); tick(1);
   }
   else if(e.t==='confere'){
     setOn('Analista','conferindo'); wires(['Analista','Auditor']);
@@ -301,17 +302,17 @@ function run(e){
     b.innerHTML=`<div class="who">${ap?'Aprovação':'Aviso'} para ${escape(e.para)}</div>
       <div class="what">${escape(e.caso.resumo)}</div>
       <div class="why">${escape(e.caso.titulo)} · ${brl(e.caso.valor)} · ${escape(e.texto)}</div>
-      ${ap?'<div class="bt"><span>Aprovar</span><span>Recusar</span></div>':''}`;
+      ${ap?(e.decisao?`<div class="dec ${e.decisao.aprovado?'ok':'no'}">${e.decisao.aprovado?'✓ Aprovado':'✕ Recusado'} por ${escape(e.decisao.quem)}</div>`:'<div class="dec wait">Esperando a decisão no Telegram</div>'):''}`;
     ph.appendChild(b); while(ph.children.length>4) ph.firstChild.remove();
     $('ag-'+e.agente) && setOn(e.agente,'aguardando humano');
     log('Humano', e.ferramenta, `${e.para}: ${e.caso.resumo}`);
   }
   else if(e.t==='handoff'){ setOn(e.para,'recebeu caso'); wires([e.de,e.para]); log(e.de,'→ '+e.para, e.texto); }
   else if(e.t==='lote_fecha'){
-    [...$('#grid').children].forEach(c=>{ if(loteAtual && loteAtual.flag[c.dataset.t]) c.className='bad'; });
-    S.ok+=e.ok_valor; S.lotesFeitos++; setOn('Sentinela','liberando lote'); wires();
-    type($('ag-Sentinela').querySelector('.think'), `${e.lote} conferido: ${e.ok} títulos seguem para o banco (${brl(e.ok_valor)}), ${e.retidos} retidos${e.perda?` — ${brl(e.perda)} que sairiam indevidamente`:''}.`, dur*0.6/speed);
-    log('Sentinela','liberar_lote',`${e.lote}: ${e.ok} ok · ${e.retidos} retidos`);
+    [...$('grid').children].forEach(c=>{ if(loteAtual && loteAtual.flag[c.dataset.t]) c.className='bad'; });
+    S.ok+=e.ok_valor; S.lotesFeitos++; setOn('Maestro','liberando lote'); wires();
+    type($('ag-Maestro').querySelector('.think'), `${e.lote} conferido: ${e.ok} títulos seguem para o banco (${brl(e.ok_valor)}), ${e.retidos} retidos${e.perda?` — ${brl(e.perda)} que sairiam indevidamente`:''}.`, dur*0.6/speed);
+    log('Maestro','liberar_lote',`${e.lote}: ${e.ok} ok · ${e.retidos} retidos`);
     const dots=$('lotes').children; if(dots[S.lotesFeitos-1]) dots[S.lotesFeitos-1].className='on';
   }
   kpis();
@@ -323,7 +324,7 @@ function next(){
   const d=run(E[i++]); timer=setTimeout(next, d/speed);
 }
 function finish(){
-  playing=false; $('play').textContent='Iniciar'; setOn('Sentinela','concluído'); wires();
+  playing=false; $('play').textContent='Iniciar'; setOn('Maestro','concluído'); wires();
   const p=D.placar; $('dSem').textContent='−'+brl(p.perda_sem_agente); $('dCom').textContent='−'+brl(p.custo_agente);
   $('dTxt').textContent=`${p.titulos_conferidos} títulos · ${p.casos} casos · ${p.acoes_executadas} ações sozinho · ${p.aprovacoes_pedidas+p.acionamentos} chamadas a humanos`;
   $('done').classList.add('show'); S.A=p.acoes_executadas; kpis();
@@ -335,7 +336,7 @@ function reset(){ clearTimeout(timer); playing=false; i=0; S={R:0,A:0,H:0,T:0,co
   $('grid').innerHTML=''; $('done').classList.remove('show'); $('hN').textContent='0'; $('play').textContent='Iniciar';
   document.querySelectorAll('.agent').forEach(a=>{a.querySelector('.think').innerHTML=''; const c=a.querySelector('.call'); if(c) c.innerHTML='<span style="color:var(--dim)">sem chamada ainda</span>'; const n=a.querySelector('.n'); if(n) n.textContent='0'; const r=a.querySelector('.r'); if(r) r.textContent='R$ 0'; const cs=a.querySelector('.case'); if(cs) cs.classList.remove('show');});
   [...$('lotes').children].forEach(d=>d.className=''); kpis(); setOn('none'); wires(); }
-$('reset').onclick=reset;
+$('reset').onclick=()=>location.reload();   // recarrega com as decisões mais recentes
 setTimeout(()=>wires(),300);
 if (D.autoplay) { setTimeout(()=>$('play').click(), 600); }
 </script>

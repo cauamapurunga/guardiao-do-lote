@@ -53,6 +53,6 @@
 - ✅ número de título inventado é barrado
 - ✅ a IA nunca decide pagamento: quem retira, cancela ou bloqueia são as regras das políticas
 
-Tempo total: 78s
+Tempo total: 45s
 
 **Resultado: tudo certo.**

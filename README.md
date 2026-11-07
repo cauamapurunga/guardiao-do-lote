@@ -33,7 +33,7 @@ O **Auditor** também procura a causa raiz. Exemplo: 8 títulos com vírgula des
 
 ## Agentes
 
-- **Sentinela (orquestrador)**: abre cada lote antes do fechamento e despacha os títulos.
+- **Maestro (orquestrador)**: abre cada lote antes do fechamento e despacha os títulos.
 - **Analista CP**: faz as três vias, duplicidade, pagamento fora do lote e correções. Alçada de R$ 5 mil.
 - **Auditor**: cuida de fraude, bloqueios, incidentes e causa raiz.
 - **Leitor da Caixa**: classifica e-mails e WhatsApps com IA (Jev no AI Proxy) e cruza com o cadastro. O texto de terceiros é tratado como dado, nunca como instrução.

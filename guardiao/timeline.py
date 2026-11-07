@@ -44,7 +44,7 @@ def construir(g: Guardiao) -> dict:
                         "fechamento": f"{r0.data_prevista:%d/%m} {r0.horario_fechamento}",
                         "n": int(len(gl)), "valor": round(float(gl.valor.sum()), 2),
                         "titulos": gl.titulo_id.tolist(), "flag": flag})
-        eventos.append({"t": "pensa", "agente": "Sentinela",
+        eventos.append({"t": "pensa", "agente": "Maestro",
                         "texto": f"Lote {lote} fecha {r0.data_prevista:%d/%m} às {r0.horario_fechamento}. "
                                  f"{len(gl)} títulos, {rs(gl.valor.sum())}. Despachando conferência."})
         if not leu_caixa:
@@ -81,9 +81,12 @@ def construir(g: Guardiao) -> dict:
                 ev = {"t": "tool", "agente": quem, "ferramenta": a.ferramenta, "alvo": a.alvo, "detalhe": a.detalhe,
                       "modo": a.modo, "caso": _caso_min(c)}
                 eventos.append(ev)
-                if a.modo in ("aprovacao", "humano"):
+                if a.modo in ("aprovacao", "humano") and quem != "Humano":
+                    dec = next((x for x in c.acoes if x["ferramenta"] in ("aprovar_acao", "recusar_acao")), None)
                     eventos.append({"t": "humano", "agente": quem, "para": a.para, "ferramenta": a.ferramenta,
-                                    "texto": a.detalhe, "caso": _caso_min(c)})
+                                    "texto": a.detalhe, "caso": _caso_min(c),
+                                    "decisao": ({"aprovado": dec["ferramenta"] == "aprovar_acao",
+                                                 "quem": dec["agente"][len("Humano ("):-1] if dec["agente"].startswith("Humano (") else dec["agente"]} if dec else None)})
         retidos = [c for c in casos]
         eventos.append({"t": "lote_fecha", "lote": lote, "ok": int(len(gl) - len(retidos)),
                         "ok_valor": round(float(gl[~gl.titulo_id.isin([c.titulo_id for c in retidos])].valor.sum()), 2),

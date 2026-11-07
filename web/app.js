@@ -3,7 +3,7 @@ const brl = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigit
 const brlc = v => v >= 1e6 ? 'R$ ' + (v / 1e6).toLocaleString('pt-BR', {maximumFractionDigits: 2}) + ' mi' : v >= 1e4 ? 'R$ ' + Math.round(v / 1e3) + ' mil' : brl(v);
 const brl2 = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-const COR_AG = {Sentinela: '#111', Analista: '#3060d0', Auditor: '#d93a3a', Leitor: '#7a5ad6'};
+const COR_AG = {Maestro: '#111', Analista: '#3060d0', Auditor: '#d93a3a', Leitor: '#7a5ad6'};
 const ICO_OK = '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
 const ICO_X = '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
 const STATUS = {resolvido: ['Agente resolveu', 'res'], aguardando_aprovacao: ['Esperando aprovação', 'apr'], aguardando_humano: ['Pessoa avisada', 'hum']};

@@ -1,7 +1,7 @@
 """Orquestração dos agentes do Guardião do Lote.
 
 Agentes (papéis e ferramentas tirados de ferramentas.csv / politicas.csv):
-  - Sentinela (orquestrador): acompanha a agenda, abre cada lote antes do fechamento, despacha os casos
+  - Maestro (orquestrador): acompanha a agenda, abre cada lote antes do fechamento, despacha os casos
   - Analista CP: três vias, duplicidade, pagamento fora do lote, correções (alçada R$ 5 mil)
   - Auditor: fraude de cadastro e boleto, bloqueios, incidentes e causa raiz
   - Leitor da Caixa: lê e-mails e WhatsApps (LLM quando disponível) e alimenta o Auditor
@@ -236,7 +236,7 @@ class Guardiao:
             if ach.lote != lote_atual:
                 lote_atual = ach.lote
                 n = int((self.b.agenda.lote_remessa == lote_atual).sum())
-                self._tool(None, "Sentinela", "listar_agenda_remessa", lote_atual,
+                self._tool(None, "Maestro", "listar_agenda_remessa", lote_atual,
                            f"abre o lote ({n} títulos, fecha {ach.fechamento}) e despacha a conferência", "auto")
             ev = list(ach.evidencias) + [e for o in lista[1:] for e in o.evidencias]
             c = Caso(f"C{i:03d}", tid, ach.fornecedor_id, self.forn_nome.get(ach.fornecedor_id, ""), ach.valor, ach.lote,
