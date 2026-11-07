@@ -1,0 +1,19 @@
+{
+  "_como_usar": "Copie este arquivo para a pasta de dados como mapeamento.json. Para cada tabela, diga o nome do arquivo exportado pelo seu sistema, o separador e como cada coluna se chama nele (nome no seu sistema -> nome no Guardião). O que não for mapeado usa o padrão.",
+  "contas_a_pagar": {
+    "arquivo": "export_titulos_erp.csv",
+    "sep": ";",
+    "decimal": ",",
+    "colunas": {
+      "NR_TITULO": "titulo_id",
+      "CD_FORNECEDOR": "fornecedor_id",
+      "NR_NOTA": "numero_nf_digitado",
+      "VL_TITULO": "valor",
+      "DT_VENCIMENTO": "vencimento"
+    }
+  },
+  "extrato_banco_meridiano": {
+    "arquivo": "extrato_ofx_convertido.csv",
+    "colunas": { "DATA_MOV": "data", "HISTORICO": "descricao", "VALOR": "valor", "TIPO": "tipo" }
+  }
+}

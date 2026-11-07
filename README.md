@@ -57,3 +57,12 @@ Os dados ficam em `data/` (bases fictícias da organização, desafio Pagamentos
 - **Chat (`latest`)**: escreve o resumo de cada caso para quem vai aprovar, e esse resumo vai junto no pedido do Telegram.
 - Sem token, tudo continua funcionando com as regras.
 - Teste rápido: `python teste_ia.py`.
+
+## Para usar no dia a dia (e com dados reais)
+
+- **Resumo das 8h no Telegram** (`/resumo`): próxima saída do banco, quanto foi retido e quem precisa decidir o quê.
+- **Decisões por urgência**: ordenadas pelo lote que sai primeiro, cada uma com o que acontece *se aprovar* e *se recusar*.
+- **Confere sozinho de hora em hora** (`INTERVALO_MIN` no `.env`) e no botão "Conferir agora": relê os arquivos e mantém as decisões já tomadas.
+- **Relatório de auditoria** (CSV): cada ação, quem fez, em qual título e com qual evidência.
+- **Dados reais sem mexer no código**: aponte `DADOS_DIR` para a pasta das exportações e descreva no `mapeamento.json` (veja `mapeamento.exemplo.json`) o nome do arquivo, o separador e como cada coluna se chama no seu ERP ou banco. Se faltar uma coluna, o Guardião diz qual. O `validar.py` testa isso com uma exportação de outro formato.
+- **Volume**: `python escala.py` mede cerca de 2 ms por título, sempre linear (17.520 títulos em 35 s). Um mês inteiro da Gocase (cerca de 2.000 títulos) leva uns 4 s.

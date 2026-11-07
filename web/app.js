@@ -1,8 +1,11 @@
 const $ = s => document.querySelector(s);
 const brl = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+const brlc = v => v >= 1e6 ? 'R$ ' + (v / 1e6).toLocaleString('pt-BR', {maximumFractionDigits: 2}) + ' mi' : v >= 1e4 ? 'R$ ' + Math.round(v / 1e3) + ' mil' : brl(v);
 const brl2 = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 const COR_AG = {Sentinela: '#111', Analista: '#3060d0', Auditor: '#d93a3a', Leitor: '#7a5ad6'};
+const ICO_OK = '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+const ICO_X = '<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
 const STATUS = {resolvido: ['Agente resolveu', 'res'], aguardando_aprovacao: ['Esperando aprovação', 'apr'], aguardando_humano: ['Pessoa avisada', 'hum']};
 let E = null, filtro = null, selDec = null;
 
@@ -26,20 +29,26 @@ function render() {
   $('#vSem').textContent = '−' + brl(p.perda_sem_agente);
   $('#vCom').textContent = '−' + brl(p.custo_agente);
   $('#vExp').textContent = `Custo com o Guardião: ${p.acionamentos} pessoas acionadas (R$ 60 cada, pela regra do desafio) e 1 pagamento legítimo que fica retido até a compra ser aprovada.`;
-  $('#kTit').textContent = p.titulos_conferidos;
-  $('#kSoz').textContent = `${p.resolvidos_sozinho} de ${p.casos}`;
-  $('#kVoce').textContent = casos.filter(c => c.status !== 'resolvido').length;
-  $('#kAcoes').textContent = p.acoes_executadas;
   const max = Math.max(...E.por_tipo.map(t => t.perda));
   $('#bars').innerHTML = E.por_tipo.sort((a, b) => b.perda - a.perda).map(t => `
     <div class="bar"><span>${esc(t.tipo)}</span><div class="tr"><i style="width:${100 * t.perda / max}%;background:${t.cor}"></i></div>
     <span class="v num">${brl(t.perda)}</span><span class="q">${t.qtd} ${t.qtd > 1 ? 'títulos' : 'título'}</span></div>`).join('');
-  const maxL = Math.max(...E.lotes.map(l => l.valor));
-  $('#strip').innerHTML = E.lotes.map(l => `
-    <div class="card lote"><span class="d">${esc(l.fecha)}</span><span class="s">${esc(l.banco)} · ${l.titulos} títulos</span>
-    <span class="num" style="font-weight:600">${brl(l.valor)}</span>
-    <div class="m"><i style="width:${l.segurado ? Math.max(4, 100 * l.segurado / l.valor) : 0}%"></i></div>
-    <span class="s">${l.retidos ? `${l.retidos} retidos · ${brl(l.segurado)}` : 'tudo certo'}</span></div>`).join('');
+  // quadro de saídas: dias nas colunas, banco nas linhas
+  const dias = [...new Set(E.lotes.map(l => l.fecha.split(' ')[0]))];
+  const bancos = [['Meridiano', '10:00'], ['Litoral', '14:00']];
+  let q = `<div class="hd"></div>` + dias.map(d => `<div class="hd">${esc(d)}</div>`).join('');
+  for (const [bn, hr] of bancos) {
+    q += `<div class="rot">${bn}<small>fecha ${hr}</small></div>`;
+    for (const d of dias) {
+      const l = E.lotes.find(x => x.banco === bn && x.fecha.startsWith(d));
+      if (!l) { q += `<div class="c vazio"></div>`; continue; }
+      q += `<div class="c ${l.segurado ? 'risco' : ''}"><b class="num">${brlc(l.valor)}</b><span>${l.titulos} títulos</span>
+        ${l.segurado ? `<em class="num">${brlc(l.segurado)} retidos</em>` : '<span>sem problema</span>'}</div>`;
+    }
+  }
+  $('#quadro').style.setProperty('--dias', dias.length);
+  $('#quadro').innerHTML = q;
+  $('#conferido').textContent = `Última conferência: ${E.conferido_em || '—'} · confere sozinho de hora em hora`;
   renderDec(); renderCasos(); renderLotes(); renderConfia();
 }
 
@@ -48,14 +57,17 @@ function renderDec() {
   const feitos = E.humanos.slice().reverse();
   $('#dTitulo').textContent = pend.length ? `${pend.length} decisões esperando alguém` : 'Nada esperando decisão';
   if (!selDec || !E.casos.find(c => c.id === selDec)) selDec = (pend[0] || E.casos[0]).id;
+  pend.sort((a, b) => a.horas - b.horas || b.valor - a.valor);
+  const quando = h => h < 48 ? `sai em ${h}h` : `sai em ${Math.round(h / 24)} dias`;
   $('#listaDec').innerHTML = pend.map(c => `
     <div class="card item ${c.id === selDec ? 'sel' : ''}" data-id="${c.id}">
-      <div><div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${pill(c)}<span class="mut" style="font-size:13px">${c.id}</span></div>
+      <div><div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${pill(c)}<span class="urg ${c.horas < 30 ? 'quente' : ''}">${quando(c.horas)}</span><span class="mut" style="font-size:13px">${c.id}</span></div>
       <div class="t">${esc(c.tipo_frase)}</div>
       <div class="meta"><span>${esc(c.fornecedor)}</span><span>Lote ${esc(c.lote)} · sai ${esc(c.fechamento)}</span></div></div>
       <div class="val num">${c.valor_fmt}</div>
       <div class="acts"><button class="btn ok sm" data-ap="${c.id}">Aprovar</button><button class="btn no sm" data-rc="${c.id}">Recusar</button>
       <button class="btn sm" data-ver="${c.id}">Ver detalhes</button><span class="para">Para <b style="color:var(--ink)">${esc(c.para)}</b> · ${esc(c.pedido)}</span></div>
+      <div class="cons"><div class="a"><b>Se aprovar</b>${esc(c.se_aprovar)}</div><div class="r"><b>Se recusar</b>${esc(c.se_recusar)}</div></div>
     </div>`).join('') + (feitos.length ? `<h3 style="margin:18px 0 4px">Já decidido</h3>` + feitos.map(h => `
     <div class="card item done"><div><div class="t">${h.aprovado ? 'Aprovado' : 'Recusado'} por ${esc(h.quem)}</div><div class="meta">${esc(h.caso)} · ${esc(h.resumo)}</div></div></div>`).join('') : '');
   $('#pvImg').src = `/api/card/${selDec}.png?t=${Date.now()}`;
@@ -91,13 +103,13 @@ function renderConfia() {
   const okSec = n => sec(n).every(i => i.ok);
   const limpa = (sec('Base sem')[0] || {}).texto || '';
   const nLimpa = (limpa.match(/^(\d+)/) || [])[1] || '';
-  const card = (bom, big, txt) => `<div class="card"><span class="ck ${bom ? '' : 'bad'}">${bom ? '✓' : '!'}</span><b class="num">${big}</b><span class="mut">${txt}</span></div>`;
+  const card = (bom, big, txt) => `<div class="card"><span class="ck ${bom ? '' : 'bad'}">${bom ? ICO_OK : ICO_X}</span><b class="num">${big}</b><span class="mut">${txt}</span></div>`;
   $('#proof').innerHTML =
     card(okSec('Base sem'), '0', `alarmes falsos em ${nLimpa} títulos sem problema`) +
     card(ok === inj && extra === 0, `${ok}/${inj}`, 'problemas novos achados, com o tipo certo, em 10 sorteios') +
     card(okSec('Dados emb'), 'Igual', 'resultado com todos os IDs trocados e as linhas embaralhadas') +
     card(okSec('IA'), '0', 'dados inventados pela IA que passam pela trava');
-  $('#checks').innerHTML = v.itens.map(i => `<div><span class="${i.ok ? 'o' : 'x'}">${i.ok ? '✓' : '✗'}</span><span>${esc(i.texto)}</span></div>`).join('');
+  $('#checks').innerHTML = v.itens.map(i => `<div><span class="${i.ok ? 'o' : 'x'}">${i.ok ? ICO_OK : ICO_X}</span><span>${esc(i.texto)}</span></div>`).join('');
   $('#tSort').innerHTML = s.map(x => `<tr><td>${x.seed}</td><td class="r num">${x.injetados}</td><td class="r num">${x.certos}</td><td class="r num">${x.perdidos}</td><td class="r num">${x.extras}</td></tr>`).join('');
   $('#iaUso').textContent = E.ia.ativa ? `Uso de IA nesta sessão: ${E.ia.uso}` : 'IA desligada nesta sessão (sem AI_PROXY_API_KEY): tudo funciona só com as regras.';
 }
@@ -132,8 +144,13 @@ function abrir(id) {
 function fechar() { $('#drawer').classList.remove('on'); $('#shade').classList.remove('on'); }
 
 async function decidir(id, aprovar) {
+  const el = document.querySelector(`.item[data-id="${id}"]`);
+  if (el) el.querySelectorAll('button').forEach(b => b.classList.add('loading'));
   const r = await fetch('/api/decidir', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({caso: id, aprovar, quem: 'Painel'})});
-  if (r.ok) { toast(aprovar ? 'Aprovado. O agente já executou o restante.' : 'Recusado. O título segue bloqueado.'); await carregar(); }
+  if (!r.ok) { toast('Não deu para registrar a decisão. Tente de novo.'); if (el) el.querySelectorAll('button').forEach(b => b.classList.remove('loading')); return; }
+  toast(aprovar ? 'Aprovado. O agente já executou o restante.' : 'Recusado. O título segue bloqueado.');
+  if (el) { el.classList.add('leaving'); await new Promise(r => setTimeout(r, 330)); }
+  await carregar();
 }
 
 function ir(v) {
@@ -159,7 +176,9 @@ document.addEventListener('click', e => {
 $('#shade').onclick = fechar;
 document.addEventListener('keydown', e => { if (e.key === 'Escape') fechar(); });
 $('#btnTg').onclick = async () => {
+  $('#btnTg').classList.add('loading'); $('#btnTg').textContent = 'Enviando…';
   const r = await fetch('/api/telegram/enviar', {method: 'POST'});
+  $('#btnTg').classList.remove('loading'); $('#btnTg').textContent = 'Enviar para o Telegram';
   const j = await r.json();
   toast(r.ok ? `${j.enviados} cards enviados para o Telegram.` : (j.detail || 'Não deu para enviar.'));
 };
@@ -191,4 +210,32 @@ $('#btnCaixa').onclick = async () => {
   const r = await fetch('/api/caixa/ia', {method: 'POST'});
   if (!r.ok) { toast((await r.json()).detail || 'IA indisponível'); return carregarCaixa(); }
   carregarCaixa(await r.json()); toast('Mensagens classificadas pela IA.');
+};
+
+// glossário: dica ao passar o mouse e lista em "Como funciona"
+let GL = {};
+fetch('/api/glossario').then(r => r.json()).then(g => {
+  GL = g;
+  $('#gloss').innerHTML = Object.entries(g).map(([k, v]) => `<div><b>${esc(k)}</b><span class="mut">${esc(v)}</span></div>`).join('');
+});
+const tip = document.createElement('div'); tip.id = 'gtip'; document.body.appendChild(tip);
+document.addEventListener('mouseover', e => {
+  const a = e.target.closest('abbr[data-g]');
+  if (!a || !GL[a.dataset.g]) return;
+  tip.textContent = GL[a.dataset.g];
+  const r = a.getBoundingClientRect();
+  tip.style.left = Math.min(r.left, innerWidth - 320) + 'px'; tip.style.top = (r.bottom + 8) + 'px';
+  tip.classList.add('on');
+});
+document.addEventListener('mouseout', e => { if (e.target.closest('abbr[data-g]')) tip.classList.remove('on'); });
+$('#btnConferir').onclick = async () => {
+  const b = $('#btnConferir'); b.classList.add('loading'); b.textContent = 'Conferindo…';
+  const r = await fetch('/api/conferir', {method: 'POST'}); const j = await r.json();
+  b.classList.remove('loading'); b.textContent = 'Conferir agora';
+  if (!r.ok) return toast(j.detail || 'Não deu para conferir');
+  toast(`Conferido às ${j.conferido_em}: ${j.casos} casos.`); carregar();
+};
+$('#btnResumo').onclick = async () => {
+  const r = await fetch('/api/resumo/telegram', {method: 'POST'}); const j = await r.json();
+  toast(r.ok ? 'Resumo enviado no Telegram.' : (j.detail || 'Não deu para enviar'));
 };

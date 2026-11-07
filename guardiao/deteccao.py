@@ -177,23 +177,32 @@ def tres_vias(b: Bases, A: pd.DataFrame) -> list[Achado]:
     nfs = b.nfs
     dup = b.duplicatas
     ocs = b.ocs.set_index("oc_id")
-    forn_por_raiz = b.fornecedores.set_index("raiz")
+    forn_por_raiz = b.fornecedores.drop_duplicates("raiz").set_index("raiz")
+    # índices em memória: busca O(1) por título (escala para dezenas de milhares de títulos)
+    nf_idx = {k: g for k, g in nfs.groupby(["raiz", "nf_norm"], sort=False)}
+    nf_por_num = {k: g for k, g in nfs.groupby("nf_norm", sort=False)}
+    dup_idx = {(k1, k2): float(v) for k1, k2, v in zip(dup.chave_acesso, dup.n_dup, dup.valor)}
+    dup_por_chave = {k: g for k, g in dup.groupby("chave_acesso", sort=False)}
+    ocs = ocs[~ocs.index.duplicated()]
+    ctr_idx = b.contratos.drop_duplicates("fornecedor_id").set_index("fornecedor_id").valor_mensal.to_dict()
+    vazio = nfs.iloc[0:0]
     for _, r in A.iterrows():
         if r.categoria == "aluguel":
-            ctr = b.contratos[b.contratos.fornecedor_id == r.fornecedor_id]
-            if len(ctr) and abs(ctr.valor_mensal.iloc[0] - r.valor) > TOL_ARREDONDAMENTO:
+            vm = ctr_idx.get(r.fornecedor_id)
+            if vm is not None and abs(vm - r.valor) > TOL_ARREDONDAMENTO:
                 out.append(_achado(r, "VALOR_DIVERGENTE", "alta", "Aluguel diferente do contrato",
-                                   [f"contrato {brl2(ctr.valor_mensal.iloc[0])} x título {brl2(r.valor)}"],
-                                   perda=max(0.0, r.valor - ctr.valor_mensal.iloc[0])))
+                                   [f"contrato {brl2(vm)} x título {brl2(r.valor)}"],
+                                   perda=max(0.0, r.valor - vm)))
             continue
         if not r.nf_norm:
             out.append(_achado(r, "SEM_NF", "media", "Pagamento sem NF (exige aprovação dupla)", ["título sem número de NF"]))
             continue
-        nf = nfs[(nfs.raiz == r.raiz) & (nfs.nf_norm == r.nf_norm)]
+        nf = nf_idx.get((r.raiz, r.nf_norm), vazio)
         if nf.empty:
-            mesma_nf = nfs[nfs.nf_norm == r.nf_norm]
-            parc = dup[dup.chave_acesso.isin(mesma_nf.chave_acesso) & (abs(dup.valor - r.valor) < 1)]
-            outra = mesma_nf[(abs(mesma_nf.valor_total - r.valor) < 1) | mesma_nf.chave_acesso.isin(parc.chave_acesso)]
+            mesma_nf = nf_por_num.get(r.nf_norm, vazio)
+            chaves_ok = {ch for ch in mesma_nf.chave_acesso
+                         if ch in dup_por_chave and (abs(dup_por_chave[ch].valor - r.valor) < 1).any()}
+            outra = mesma_nf[(abs(mesma_nf.valor_total - r.valor) < 1) | mesma_nf.chave_acesso.isin(chaves_ok)]
             if len(outra):
                 o = outra.iloc[0]
                 certo = forn_por_raiz.loc[o.raiz] if o.raiz in forn_por_raiz.index else None
@@ -211,9 +220,8 @@ def tres_vias(b: Bases, A: pd.DataFrame) -> list[Achado]:
             continue
         nf = nf.iloc[0]
         n_dup = str(r.parcela).split("/")[0].zfill(3)
-        d = dup[(dup.chave_acesso == nf.chave_acesso) & (dup.n_dup == n_dup)]
-        if len(d):
-            vd = float(d.valor.iloc[0])
+        vd = dup_idx.get((nf.chave_acesso, n_dup))
+        if vd is not None:
             dif = r.valor - vd
             if abs(dif) > TOL_ARREDONDAMENTO:
                 razao = r.valor / vd if vd else 0

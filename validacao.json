@@ -58,6 +58,11 @@
   },
   {
    "ok": true,
+   "texto": "arquivo do ERP com colunas NR_TITULO, VL_TITULO… e separador ';': mesmos 54 títulos com problema",
+   "secao": "Dados de outro sistema"
+  },
+  {
+   "ok": true,
    "texto": "texto fiel às evidências é aceito",
    "secao": "IA não inventa dados"
   },
@@ -159,5 +164,5 @@
    "extras": 0
   }
  ],
- "quando": "07/11 10:51"
+ "quando": "07/11 11:15"
 }

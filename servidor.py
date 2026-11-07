@@ -12,6 +12,7 @@ import webbrowser
 from dataclasses import asdict
 from pathlib import Path
 
+import pandas as pd
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
@@ -25,6 +26,7 @@ from guardiao import telegram as tg
 from guardiao.agentes import Guardiao
 from guardiao.dados import brl2, carregar
 from guardiao.timeline import construir
+from guardiao import resumo as R
 
 RAIZ = Path(__file__).resolve().parent
 WEB = RAIZ / "web"
@@ -37,7 +39,7 @@ ESTADO: dict = {}
 _lock = threading.Lock()
 
 
-def iniciar():
+def iniciar(repetir_decisoes: list | None = None):
     with _lock:
         b = carregar()
         ESTADO["b"] = b
@@ -51,9 +53,16 @@ def iniciar():
         def decidir_e_registrar(cid, aprovado, quem="humano"):
             c = _decidir(cid, aprovado, quem)
             if c:
-                ESTADO["eventos_humanos"].append({"quem": quem, "caso": c.id, "aprovado": aprovado, "resumo": c.resumo})
+                ESTADO["eventos_humanos"].append({"quem": quem, "caso": c.id, "titulo": c.titulo_id,
+                                                  "aprovado": aprovado, "resumo": c.resumo})
             return c
         g.decidir = decidir_e_registrar
+        ESTADO["conferido_em"] = pd.Timestamp.now().strftime("%d/%m %H:%M")
+        # nova conferência: decisões que pessoas já tomaram continuam valendo (pelo número do título)
+        for h in repetir_decisoes or []:
+            c = next((x for x in g.casos if x.titulo_id == h["titulo"]), None)
+            if c:
+                g.decidir(c.id, h["aprovado"], h["quem"])
     try:
         import bot
         bot.g = ESTADO["g"]
@@ -79,6 +88,11 @@ def caso_json(c) -> dict:
     d["para"] = L.primeiro_nome(c.aprovacao["nome"]) if c.aprovacao else None
     avisos = [a for a in c.acoes if a["ferramenta"] == "acionar_pessoa"]
     d["avisado"] = [{"pessoa": L.primeiro_nome(a["para"]), "motivo": a["detalhe"]} for a in avisos]
+    n_forn = sum(1 for x in ESTADO["g"].casos if x.fornecedor_id == c.fornecedor_id)
+    d["se_aprovar"], d["se_recusar"] = L.consequencias(d, n_forn) if c.aprovacao else (None, None)
+    # urgência: horas até o lote ir ao banco, a partir do relógio do ambiente
+    sai = pd.Timestamp(f"{ESTADO['b'].ref.year}-{c.fechamento[3:5]}-{c.fechamento[0:2]} {c.fechamento[6:]}")
+    d["horas"] = max(0, int((sai - ESTADO["b"].ref).total_seconds() // 3600))
     return d
 
 
@@ -115,7 +129,7 @@ def estado():
     return {"placar": {k: v for k, v in p.items() if k != "por_tipo"},
             "por_tipo": [{"tipo": L.tipo(k)["titulo"], "cor": L.tipo(k)["cor"], **v} for k, v in p["por_tipo"].items()],
             "casos": casos, "lotes": lotes, "validacao": val, "log": log[-400:],
-            "humanos": ESTADO["eventos_humanos"][-30:],
+            "humanos": ESTADO["eventos_humanos"][-30:], "conferido_em": ESTADO.get("conferido_em"),
             "telegram": {"token": bool(tg.token()), "chat": bool(tg.chat_id() or ESTADO.get("chat"))},
             "ia": {"ativa": ia.disponivel(), "uso": ia.resumo_uso(), "linhas": ia.USO["linhas"][-8:]},
             "causa_raiz": [asdict(a) for a in g.log if a.ferramenta in ("propor_correcao_processo", "abrir_incidente")]}
@@ -202,6 +216,66 @@ def reiniciar():
     return {"ok": True}
 
 
+@app.post("/api/conferir")
+def conferir():
+    """Relê os arquivos dos sistemas e confere tudo de novo, mantendo as decisões já tomadas."""
+    try:
+        iniciar(list(ESTADO.get("eventos_humanos", [])))
+    except Exception as e:
+        raise HTTPException(400, f"Não consegui ler os dados: {e}")
+    return {"ok": True, "conferido_em": ESTADO["conferido_em"], "casos": len(ESTADO["g"].casos)}
+
+
+@app.get("/api/resumo")
+def resumo():
+    return {"texto": R.resumo_do_dia(ESTADO["g"])}
+
+
+@app.post("/api/resumo/telegram")
+def resumo_telegram():
+    chat = tg.chat_id() or ESTADO.get("chat") or (tg.descobrir_chat_id() if tg.token() else None)
+    if not chat:
+        raise HTTPException(400, "Mande /start para o bot no Telegram e tente de novo")
+    ESTADO["chat"] = chat
+    tg.enviar(R.resumo_do_dia(ESTADO["g"]), chat)
+    return {"ok": True}
+
+
+@app.get("/api/auditoria.csv")
+def auditoria():
+    return Response(R.auditoria_csv(ESTADO["g"]), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": "attachment; filename=guardiao_auditoria.csv"})
+
+
+@app.get("/api/glossario")
+def glossario():
+    return L.GLOSSARIO
+
+
+def _rotina():
+    """Acompanha o dia a dia: confere de novo de hora em hora e manda o resumo às 8h no Telegram."""
+    import time as _t
+    intervalo = int(os.getenv("INTERVALO_MIN", "60")) * 60
+    ultimo_resumo = None
+    while True:
+        _t.sleep(60)
+        agora = pd.Timestamp.now()
+        if (agora - pd.Timestamp(ESTADO.get("_ultima", agora))).total_seconds() >= intervalo:
+            try:
+                iniciar(list(ESTADO.get("eventos_humanos", [])))
+                print(f"🔁 Conferência automática às {agora:%H:%M}: {len(ESTADO['g'].casos)} casos")
+            except Exception as e:
+                print("Conferência automática falhou:", type(e).__name__)
+            ESTADO["_ultima"] = agora
+        chat = tg.chat_id() or ESTADO.get("chat")
+        if tg.token() and chat and agora.hour == 8 and ultimo_resumo != agora.date():
+            try:
+                tg.enviar(R.resumo_do_dia(ESTADO["g"]), chat)
+                ultimo_resumo = agora.date()
+            except Exception:
+                pass
+
+
 def _bot():
     try:
         import bot
@@ -213,6 +287,8 @@ def _bot():
 
 if __name__ == "__main__":
     iniciar()
+    ESTADO["_ultima"] = pd.Timestamp.now()
+    threading.Thread(target=_rotina, daemon=True).start()
     if tg.token():
         threading.Thread(target=_bot, daemon=True).start()
         print("🤖 Bot do Telegram ligado (mande /start para ele).")

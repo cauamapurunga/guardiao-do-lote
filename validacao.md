@@ -33,12 +33,15 @@
 ## 4. IDs trocados e linhas embaralhadas: resultado tem que ser igual
 - ✅ 54 títulos com problema, mesmos tipos e mesmos títulos (traduzidos) que a base original
 
+## 4b. Exportação de outro sistema, ligada só pelo mapeamento.json
+- ✅ arquivo do ERP com colunas NR_TITULO, VL_TITULO… e separador ';': mesmos 54 títulos com problema
+
 ## 5. Trava anti-alucinação: texto da IA com dado inventado é descartado
 - ✅ texto fiel às evidências é aceito
 - ✅ valor inventado (R$ 11.808,60 no lugar de R$ 1.180,86) é barrado
 - ✅ número de título inventado é barrado
 - ✅ a IA nunca decide pagamento: quem retira, cancela ou bloqueia são as regras das políticas
 
-Tempo total: 34s
+Tempo total: 38s
 
 **Resultado: tudo certo.**

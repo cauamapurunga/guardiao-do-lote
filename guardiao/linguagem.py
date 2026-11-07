@@ -58,3 +58,38 @@ def feito(ferramenta: str) -> str:
 def primeiro_nome(pessoa: str) -> str:
     """'Renata Paiva (coord. contas a pagar)' -> 'Renata Paiva'"""
     return pessoa.split("(")[0].strip()
+
+
+def consequencias(caso: dict, n_mesmo_fornecedor: int = 1) -> tuple[str, str]:
+    """O que acontece se a pessoa aprovar ou recusar, em uma frase cada."""
+    acao = (caso.get("aprovacao") or {}).get("acao", "")
+    t = caso["tipo"]
+    if acao.startswith("reverter_alteracao_cadastro"):
+        n = f"os {n_mesmo_fornecedor} títulos" if n_mesmo_fornecedor > 1 else "o título"
+        return (f"O cadastro volta para a conta antiga, que estava confirmada, e {n} pagam o fornecedor de verdade.",
+                f"{n.capitalize()} seguem bloqueados até alguém confirmar a nova conta por telefone com o fornecedor.")
+    if acao.startswith("cancelar_titulo"):
+        if t == "JA_PAGO_FORA_DO_LOTE":
+            return ("O título é cancelado porque já foi pago por fora. Nada sai em dobro.",
+                    "O título continua fora do lote, sem pagar, até o tesoureiro conferir o extrato.")
+        return ("A cópia é cancelada. A nota é paga uma vez só, pelo título original.",
+                "A cópia continua fora do lote, sem pagar. O título original segue normal.")
+    if acao.startswith("corrigir_lancamento valor"):
+        novo = acao.split("=", 1)[-1] if "=" in acao else "o valor da nota"
+        return (f"O título volta ao lote com {novo}, o valor da nota fiscal.",
+                "O título fica fora do lote até alguém corrigir à mão. O fornecedor pode receber com atraso.")
+    if acao.startswith("corrigir_lancamento fornecedor"):
+        return ("O título passa para a empresa que emitiu a nota e volta ao lote.",
+                "O título fica fora do lote. Ninguém recebe até o lançamento ser corrigido.")
+    return ("O pagamento sai como exceção aprovada.", "O título continua fora do lote.")
+
+
+GLOSSARIO = {
+    "lote": "Arquivo com os pagamentos do dia que vai ao banco num horário fixo. O que estiver nele, sai.",
+    "título": "Uma conta a pagar lançada no ERP (uma parcela de uma nota, um boleto, um aluguel).",
+    "NF": "Nota fiscal do fornecedor. Diz quanto cobrar e em quantas parcelas.",
+    "OC": "Ordem de compra: o pedido aprovado em Compras antes da compra acontecer.",
+    "DDA": "Lista de boletos que os bancos registraram contra o CNPJ da empresa. Mostra quem de verdade vai receber.",
+    "alçada": "Até quanto cada pessoa (ou o agente) pode aprovar sozinha.",
+    "aprovação dupla": "Duas pessoas diferentes precisam aprovar. Vale para troca de conta bancária.",
+}

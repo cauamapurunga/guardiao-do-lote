@@ -15,6 +15,7 @@ Uso: py validar.py
 from __future__ import annotations
 
 import copy
+from pathlib import Path
 import random
 import sys
 import time
@@ -302,6 +303,30 @@ def main():
     res = por_titulo(emb)
     esperado_emb = {mt.get(t, t): tp for t, tp in orig.items()}
     reg(res == esperado_emb, f"{len(res)} títulos com problema, mesmos tipos e mesmos títulos (traduzidos) que a base original")
+
+    print("\n4b) Exportação de outro sistema (outros nomes de coluna e separador ;)"); secao[0] = "Dados de outro sistema"
+    linhas += ["", "## 4b. Exportação de outro sistema, ligada só pelo mapeamento.json"]
+    import json as _json
+    import shutil
+    import tempfile
+    from guardiao import dados as D
+    tmp = Path(tempfile.mkdtemp())
+    for f in D.DATA_DIR.glob("*.csv"):
+        shutil.copy(f, tmp / f.name)
+    cp = pd.read_csv(tmp / "contas_a_pagar.csv", dtype=str)
+    cp.rename(columns={"titulo_id": "NR_TITULO", "fornecedor_id": "CD_FORNEC", "valor": "VL_TITULO",
+                       "numero_nf_digitado": "NR_NOTA"}).to_csv(tmp / "titulos_erp.csv", sep=";", index=False)
+    (tmp / "contas_a_pagar.csv").unlink()
+    (tmp / "mapeamento.json").write_text(_json.dumps({"contas_a_pagar": {
+        "arquivo": "titulos_erp.csv", "sep": ";",
+        "colunas": {"NR_TITULO": "titulo_id", "CD_FORNEC": "fornecedor_id", "VL_TITULO": "valor", "NR_NOTA": "numero_nf_digitado"}}}))
+    antigo = D.DATA_DIR
+    try:
+        D.DATA_DIR = tmp
+        outro = por_titulo(carregar())
+    finally:
+        D.DATA_DIR = antigo
+    reg(outro == orig, f"arquivo do ERP com colunas NR_TITULO, VL_TITULO… e separador ';': mesmos {len(outro)} títulos com problema")
 
     print("\n5) Trava anti-alucinação nos textos da IA"); secao[0] = "IA não inventa dados"
     linhas += ["", "## 5. Trava anti-alucinação: texto da IA com dado inventado é descartado"]

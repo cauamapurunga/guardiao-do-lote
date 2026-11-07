@@ -60,12 +60,16 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 .wire.go{stroke:#111;stroke-width:2;stroke-dasharray:6 6;animation:dash .6s linear infinite}
 @keyframes dash{to{stroke-dashoffset:-12}}
 .agents{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;z-index:1}
-.agent{position:relative;z-index:1;background:var(--panel2);border:1px solid var(--line2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:212px;transition:border-color .25s,box-shadow .25s}
+.agent{position:relative;z-index:1;padding-top:16px!important;background:var(--panel2);border:1px solid var(--line2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:212px;transition:border-color .25s,box-shadow .25s}
 .agent.sent{width:min(560px,100%);margin:0 auto;min-height:0}
 .agent.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 12px 30px -18px rgba(17,17,17,.35)}
 .ahead{display:flex;align-items:center;gap:10px}
-.av{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:700;color:#fff;background:var(--c);font-size:14px}
+.av{width:56px;height:56px;border-radius:14px;background:#000;flex:none;transition:transform .35s cubic-bezier(.16,1,.3,1)}
+.agent.on .av{transform:translateY(-3px) scale(1.06);box-shadow:0 8px 18px -8px var(--c)}
 .an{font-weight:700;font-size:14px} .ar{color:var(--mut);font-size:11px}
+.agent:not(.sent) .st{position:absolute;top:-11px;right:12px;border:1px solid var(--line2);background:#fff}
+.agent.on:not(.sent) .st{border-color:var(--c)}
+.ahead>div{min-width:0}
 .st{margin-left:auto;font-size:10.5px;font-weight:600;border-radius:999px;padding:3px 8px;background:#efeee9;color:var(--mut)}
 .agent.on .st{background:var(--c);color:#fff}
 .think{color:#2b2d31;line-height:1.45;min-height:38px;font-size:12.5px}
@@ -119,9 +123,9 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
     <span class="chip">fecha <b id="tFecha">—</b></span>
     <div class="lotes" id="lotes"></div>
     <div class="ctl">
-      <button class="btn pri" id="play">▶ Iniciar</button>
+      <button class="btn pri" id="play">Iniciar</button>
       <button class="btn" data-s="1">1×</button><button class="btn sel" data-s="2">2×</button><button class="btn" data-s="5">5×</button>
-      <button class="btn" id="reset">↺</button>
+      <button class="btn" id="reset">Reiniciar</button>
     </div>
   </div>
 
@@ -142,26 +146,26 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
     <div class="card room" id="room">
       <svg class="wires" id="wires"></svg>
       <div class="agent sent" id="ag-Sentinela" style="--c:var(--sent)">
-        <div class="ahead"><div class="av">S</div><div><div class="an">Sentinela</div><div class="ar">orquestrador · abre lotes e despacha</div></div><span class="st">ocioso</span></div>
+        <div class="ahead"><img class="av" src="/assets/agentes/sentinela.png" alt=""><div><div class="an">Sentinela</div><div class="ar">orquestrador · abre lotes e despacha</div></div><span class="st">ocioso</span></div>
         <div class="think"></div>
       </div>
       <div class="agents">
         <div class="agent" id="ag-Analista" style="--c:var(--blue)">
-          <div class="ahead"><div class="av">A</div><div><div class="an">Analista CP</div><div class="ar">3 vias · duplicidade · alçada R$ 5 mil</div></div><span class="st">ocioso</span></div>
+          <div class="ahead"><img class="av" src="/assets/agentes/analista.png" alt=""><div><div class="an">Analista CP</div><div class="ar">confere nota, compra e banco · até R$ 5 mil</div></div><span class="st">ocioso</span></div>
           <div class="think"></div>
           <div class="case"></div>
           <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
           <div class="ameta"><span>ações <b class="n">0</b></span><span>segurado <b class="r">R$ 0</b></span></div>
         </div>
         <div class="agent" id="ag-Auditor" style="--c:var(--red)">
-          <div class="ahead"><div class="av">Au</div><div><div class="an">Auditor</div><div class="ar">fraude · cadastro · causa raiz</div></div><span class="st">ocioso</span></div>
+          <div class="ahead"><img class="av" src="/assets/agentes/auditor.png" alt=""><div><div class="an">Auditor</div><div class="ar">caça golpe e a causa dos erros</div></div><span class="st">ocioso</span></div>
           <div class="think"></div>
           <div class="case"></div>
           <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
           <div class="ameta"><span>ações <b class="n">0</b></span><span>segurado <b class="r">R$ 0</b></span></div>
         </div>
         <div class="agent" id="ag-Leitor" style="--c:var(--violet)">
-          <div class="ahead"><div class="av">L</div><div><div class="an">Leitor da Caixa</div><div class="ar">e-mail e WhatsApp · IA</div></div><span class="st">ocioso</span></div>
+          <div class="ahead"><img class="av" src="/assets/agentes/leitor.png" alt=""><div><div class="an">Leitor da Caixa</div><div class="ar">lê e-mails e WhatsApps com IA</div></div><span class="st">ocioso</span></div>
           <div class="think"></div>
           <div class="case"></div>
           <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
@@ -294,10 +298,10 @@ function run(e){
     const ph=$('phone'); const em=ph.querySelector('.empty'); if(em) em.remove();
     const b=document.createElement('div'); b.className='bub';
     const ap = e.ferramenta==='solicitar_aprovacao';
-    b.innerHTML=`<div class="who">${ap?'🖐️ Aprovação':'🔔 Acionamento'} → ${escape(e.para)}</div>
+    b.innerHTML=`<div class="who">${ap?'Aprovação':'Aviso'} para ${escape(e.para)}</div>
       <div class="what">${escape(e.caso.resumo)}</div>
       <div class="why">${escape(e.caso.titulo)} · ${brl(e.caso.valor)} · ${escape(e.texto)}</div>
-      ${ap?'<div class="bt"><span>✅ Aprovar</span><span>❌ Recusar</span></div>':''}`;
+      ${ap?'<div class="bt"><span>Aprovar</span><span>Recusar</span></div>':''}`;
     ph.appendChild(b); while(ph.children.length>4) ph.firstChild.remove();
     $('ag-'+e.agente) && setOn(e.agente,'aguardando humano');
     log('Humano', e.ferramenta, `${e.para}: ${e.caso.resumo}`);
@@ -318,16 +322,16 @@ function next(){
   const d=run(E[i++]); timer=setTimeout(next, d/speed);
 }
 function finish(){
-  playing=false; $('play').textContent='▶ Iniciar'; setOn('Sentinela','concluído'); wires();
+  playing=false; $('play').textContent='Iniciar'; setOn('Sentinela','concluído'); wires();
   const p=D.placar; $('dSem').textContent='−'+brl(p.perda_sem_agente); $('dCom').textContent='−'+brl(p.custo_agente);
   $('dTxt').textContent=`${p.titulos_conferidos} títulos · ${p.casos} casos · ${p.acoes_executadas} ações sozinho · ${p.aprovacoes_pedidas+p.acionamentos} chamadas a humanos`;
   $('done').classList.add('show'); S.A=p.acoes_executadas; kpis();
 }
-$('play').onclick=()=>{ if(i>=E.length) reset(); playing=!playing; $('play').textContent=playing?'❚❚ Pausar':'▶ Continuar'; if(playing) next(); else clearTimeout(timer); };
+$('play').onclick=()=>{ if(i>=E.length) reset(); playing=!playing; $('play').textContent=playing?'Pausar':'Continuar'; if(playing) next(); else clearTimeout(timer); };
 document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{speed=+b.dataset.s; document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('sel',x===b));});
 function reset(){ clearTimeout(timer); playing=false; i=0; S={R:0,A:0,H:0,T:0,conf:0,ok:0,ret:0,lotesFeitos:0,contados:new Set(),agN:{},agR:{}};
   clk=new Date(2026,10,2,8,0); tick(0); $('term').innerHTML=''; $('phone').innerHTML='<div class="empty">Quando a decisão não cabe ao agente,<br>ele chama a pessoa certa aqui.</div>';
-  $('grid').innerHTML=''; $('done').classList.remove('show'); $('hN').textContent='0'; $('play').textContent='▶ Iniciar';
+  $('grid').innerHTML=''; $('done').classList.remove('show'); $('hN').textContent='0'; $('play').textContent='Iniciar';
   document.querySelectorAll('.agent').forEach(a=>{a.querySelector('.think').innerHTML=''; const c=a.querySelector('.call'); if(c) c.innerHTML='<span style="color:var(--dim)">sem chamada ainda</span>'; const n=a.querySelector('.n'); if(n) n.textContent='0'; const r=a.querySelector('.r'); if(r) r.textContent='R$ 0'; const cs=a.querySelector('.case'); if(cs) cs.classList.remove('show');});
   [...$('lotes').children].forEach(d=>d.className=''); kpis(); setOn('none'); wires(); }
 $('reset').onclick=reset;

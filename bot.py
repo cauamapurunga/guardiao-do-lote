@@ -4,6 +4,7 @@ Rodar:  python bot.py   (precisa de TELEGRAM_TOKEN no .env)
 
 Comandos:
   /start        registra o chat e mostra o resumo
+  /resumo       resumo do dia (também chega sozinho às 8h quando o servidor está ligado)
   /status       placar em R$ e o que está pendente
   /lote         próximos lotes e o que o agente segurou em cada um
   /pendentes    pedidos de aprovação (card em imagem + botões)
@@ -100,6 +101,9 @@ def main():
             tid = re.search(r"TP\d{6}", texto.upper())
             if texto.startswith("/start"):
                 tg.enviar(status() + f"\n\n(seu chat_id: <code>{chat}</code>)", chat)
+            elif texto.startswith("/resumo"):
+                from guardiao import resumo as R
+                tg.enviar(R.resumo_do_dia(g), chat)
             elif texto.startswith("/status"):
                 tg.enviar(status(), chat)
             elif texto.startswith("/lote"):
@@ -121,7 +125,7 @@ def main():
             elif tid:
                 tg.enviar(titulo(tid.group(0)), chat)
             else:
-                tg.enviar("Posso: /status · /lote · /pendentes · /avisos · ou mande um número de título (TP…).", chat)
+                tg.enviar("Posso: /resumo · /status · /lote · /pendentes · /avisos · ou mande um número de título (TP…).", chat)
 
 
 if __name__ == "__main__":
