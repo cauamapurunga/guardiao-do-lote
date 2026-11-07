@@ -88,6 +88,7 @@ class Bases:
     ferramentas: pd.DataFrame
     retorno: pd.DataFrame
     ref: pd.Timestamp = REF
+    recebimentos: pd.DataFrame | None = None
 
 
 def _csv(nome: str, **kw) -> pd.DataFrame:
@@ -154,4 +155,8 @@ def carregar(data_dir: Path | None = None) -> Bases:
     r = pol[(pol.secao == "data_referencia")]
     if len(r):
         ref = pd.Timestamp(r.valor.iloc[0])
-    return Bases(ag, tit, forn, alt, nfs, dup, ocs, dda, usu, com, ctr, mer, lit, pol, fer, ret, ref)
+    try:
+        rec = _csv("recebimentos_mercadoria", dtype={"chave_acesso": str})
+    except ErroDeDados:
+        rec = None                     # sem WMS: a checagem de recebimento fica desligada
+    return Bases(ag, tit, forn, alt, nfs, dup, ocs, dda, usu, com, ctr, mer, lit, pol, fer, ret, ref, rec)

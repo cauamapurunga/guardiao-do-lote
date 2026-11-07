@@ -240,6 +240,8 @@ def simular():
     seed = random.randint(1000, 999999)
     proibidos = {a.fornecedor_id for a in varrer(base)}
     novo, esperado = validar.injetar(base, seed, proibidos)
+    novo, esperado2 = validar.injetar_extras(novo, seed + 1, proibidos | {novo.agenda.set_index("titulo_id").fornecedor_id.get(t) for t in esperado})
+    esperado = {**esperado, **esperado2}
     iniciar(base=novo)
     achados = {c.titulo_id for c in ESTADO["g"].casos}
     pegos = sum(1 for t in esperado if t in achados)

@@ -25,12 +25,11 @@ from collections import Counter
 import pandas as pd
 
 from guardiao import env  # noqa: F401
-from guardiao.dados import Bases, carregar, dominio, norm_nf, raiz, so_digitos
+from guardiao.dados import Bases, carregar, dominio, norm_nf, raiz, so_digitos  # noqa: F401
 from guardiao.deteccao import varrer
 from guardiao import linguagem as LG
 
-PRIO = ["GOLPE_TROCA_CONTA", "BOLETO_SUSPEITO", "JA_PAGO_FORA_DO_LOTE", "DUPLICIDADE", "FORNECEDOR_ERRADO",
-        "OC_INVALIDA", "VALOR_DIVERGENTE", "NF_NAO_ENCONTRADA", "SEM_NF", "SEM_OC", "NF_ACIMA_DA_OC"]
+from guardiao.agentes import PRIORIDADE as PRIO
 
 
 def renormalizar(b: Bases) -> Bases:
@@ -91,9 +90,8 @@ def limpar(b: Bases) -> Bases:
             oc = b.titulos.loc[b.titulos.titulo_id == t, "oc_id"].iloc[0]
             b.ocs.loc[b.ocs.oc_id == oc, "status"] = "aprovada"
         elif a.tipo == "BOLETO_SUSPEITO":
-            fid = b.titulos.loc[b.titulos.titulo_id == t, "fornecedor_id"].iloc[0]
-            cnpj = b.fornecedores.loc[b.fornecedores.fornecedor_id == fid, "cnpj"].iloc[0]
-            b.titulos.loc[b.titulos.titulo_id == t, "cnpj_beneficiario_boleto"] = cnpj
+            b.titulos.loc[b.titulos.titulo_id == t, "status"] = "cancelado"   # boleto falso: sai da agenda
+            b.agenda = b.agenda[b.agenda.titulo_id != t]
     return renormalizar(b)
 
 
@@ -209,6 +207,78 @@ def injetar(base: Bases, seed: int, proibidos: set[str]) -> tuple[Bases, dict[st
     return renormalizar(b), esperado
 
 
+# ------------------------------------------------------------------ 3b. regras da política que a base de treino não tinha
+def injetar_extras(base: Bases, seed: int, proibidos: set[str]) -> tuple[Bases, dict[str, str]]:
+    rnd = random.Random(seed)
+    b = copy.deepcopy(base)
+    esperado: dict[str, str] = {}
+    usados_f: set[str] = set(proibidos)
+    ag = b.agenda.merge(b.titulos[["titulo_id", "nf_norm", "oc_id", "linha_digitavel", "lancado_por"]], on="titulo_id") \
+        .merge(b.fornecedores[["fornecedor_id", "categoria", "raiz"]], on="fornecedor_id")
+    um_por_forn = ag.groupby("fornecedor_id").titulo_id.transform("count") == 1
+
+    def sortear(f=None, sozinho=True):
+        c = ag[~ag.fornecedor_id.isin(usados_f) & (ag.categoria != "aluguel")]
+        if sozinho:
+            c = c[um_por_forn.loc[c.index]]
+        if f is not None:
+            c = c[f(c)]
+        r = c.iloc[rnd.randrange(len(c))]
+        usados_f.add(r.fornecedor_id)
+        return r
+
+    # boleto cancelado pelo fornecedor no banco
+    dda_ld = set(b.dda.linha_digitavel.map(so_digitos))
+    r = sortear(lambda c: (c.forma_pagamento == "boleto") & c.linha_digitavel.map(so_digitos).isin(dda_ld))
+    b.dda.loc[b.dda.linha_digitavel.map(so_digitos) == so_digitos(r.linha_digitavel), "situacao"] = "baixado pelo beneficiário"
+    esperado[r.titulo_id] = "BOLETO_BAIXADO"
+    # boleto que nenhum banco registrou
+    r = sortear(lambda c: c.forma_pagamento == "boleto")
+    falsa = "".join(str(rnd.randint(0, 9)) for _ in range(47))
+    b.titulos.loc[b.titulos.titulo_id == r.titulo_id, "linha_digitavel"] = falsa
+    esperado[r.titulo_id] = "BOLETO_SUSPEITO"
+    # nota cancelada na Receita
+    r = sortear(lambda c: c.nf_norm != "")
+    b.nfs.loc[(b.nfs.raiz == r.raiz) & (b.nfs.nf_norm == r.nf_norm), "situacao_sefaz"] = "cancelada"
+    esperado[r.titulo_id] = "NF_CANCELADA"
+    # mercadoria que não chegou
+    nf_velha = b.nfs[pd.to_datetime(b.nfs.data_emissao) <= b.ref - pd.Timedelta(days=25)]
+    chaves = dict(zip(zip(nf_velha.raiz, nf_velha.nf_norm), nf_velha.chave_acesso))
+    r = sortear(lambda c: c.categoria.isin(["produto", "embalagens"]) & pd.Series(list(zip(c.raiz, c.nf_norm)), index=c.index).isin(chaves),
+                sozinho=False)
+    b.recebimentos = b.recebimentos[b.recebimentos.chave_acesso != chaves[(r.raiz, r.nf_norm)]]
+    for t in ag[(ag.raiz == r.raiz) & (ag.nf_norm == r.nf_norm)].titulo_id:
+        esperado[t] = "SEM_RECEBIMENTO"
+    # lançado por quem já tinha saído da empresa (ou por quem não é do contas a pagar)
+    r = sortear()
+    if seed % 2:
+        sai = b.usuarios[b.usuarios.data_desligamento.notna()].iloc[0]
+        b.titulos.loc[b.titulos.titulo_id == r.titulo_id, ["lancado_por", "data_lancamento"]] = \
+            [sai.login, str(pd.Timestamp(sai.data_desligamento) + pd.Timedelta(days=10))]
+    else:
+        b.titulos.loc[b.titulos.titulo_id == r.titulo_id, "lancado_por"] = b.usuarios[b.usuarios.perfil == "comprador"].login.iloc[0]
+    esperado[r.titulo_id] = "LANCADOR_INVALIDO"
+    # fornecedor inativo
+    r = sortear()
+    b.fornecedores.loc[b.fornecedores.fornecedor_id == r.fornecedor_id, "status_cadastro"] = "bloqueado"
+    esperado[r.titulo_id] = "FORNECEDOR_INATIVO"
+    # pagamento dividido em 3 para caber na alçada (sem nota)
+    r = sortear()
+    base_t = b.titulos[b.titulos.titulo_id == r.titulo_id].iloc[0]
+    base_a = b.agenda[b.agenda.titulo_id == r.titulo_id].iloc[0]
+    novos_t, novos_a = [], []
+    for i in range(3):
+        t = base_t.copy(); a = base_a.copy()
+        t["titulo_id"] = a["titulo_id"] = f"TPF{seed}{i}"
+        t["numero_nf_digitado"] = None; t["parcela"] = f"{i + 1}/3"; t["origem_lancamento"] = "manual"
+        t["valor"] = a["valor"] = round(rnd.uniform(3000, 4900), 2)
+        novos_t.append(t); novos_a.append(a)
+        esperado[t["titulo_id"]] = "FRACIONAMENTO"
+    b.titulos = pd.concat([b.titulos, pd.DataFrame(novos_t)], ignore_index=True)
+    b.agenda = pd.concat([b.agenda, pd.DataFrame(novos_a)], ignore_index=True)
+    return renormalizar(b), esperado
+
+
 # ------------------------------------------------------------------ 4. IDs trocados e linhas embaralhadas
 def embaralhar(base: Bases, seed: int = 7) -> tuple[Bases, dict[str, str]]:
     rnd = random.Random(seed)
@@ -296,6 +366,25 @@ def main():
     for tp in por_tipo_tot:
         reg(por_tipo_ok[tp] == por_tipo_tot[tp], f"{LG.tipo(tp)['titulo']}: {por_tipo_ok[tp]}/{por_tipo_tot[tp]} detectados com o tipo certo")
     reg(tot["extra"] == 0, f"alertas que não deviam existir: {tot['extra']}")
+
+    print("\n3b) Regras da política que a base de treino não tinha (5 sorteios)"); secao[0] = "Regras novas da política"
+    linhas += ["", "## 3b. Regras da política que não apareceram na base de treino"]
+    ok_t, tot_t, extras_b = Counter(), Counter(), 0
+    for seed in range(1, 6):
+        inj, esp = injetar_extras(limpa, seed, proibidos)
+        achou = por_titulo(inj)
+        for t, tp in esp.items():
+            tot_t[tp] += 1
+            ok_t[tp] += achou.get(t) == tp
+            if achou.get(t) != tp:
+                print(f"      esperado {tp} em {t}, achou {achou.get(t)}")
+        extras_b += sum(1 for t in achou if t not in esp)
+        for t in achou:
+            if t not in esp:
+                print(f"      a mais: {t} {achou[t]}")
+    for tp in tot_t:
+        reg(ok_t[tp] == tot_t[tp], f"{LG.tipo(tp)['titulo']}: {ok_t[tp]}/{tot_t[tp]} detectados com o tipo certo")
+    reg(extras_b == 0, f"alertas que não deviam existir: {extras_b}")
 
     print("\n4) IDs trocados e linhas embaralhadas"); secao[0] = "Dados embaralhados: nada decorado"
     linhas += ["", "## 4. IDs trocados e linhas embaralhadas: resultado tem que ser igual"]

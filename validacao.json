@@ -3,12 +3,12 @@
  "itens": [
   {
    "ok": true,
-   "texto": "54 títulos com problema em 876 da agenda: possível golpe 25, nota lançada duas vezes 13, valor digitado errado 8, pagamento em dobro 3, empresa errada 2, compra não aprovada 2, boleto de outra empresa 1",
+   "texto": "54 títulos com problema em 876 da agenda: possível golpe 25, nota lançada duas vezes 13, valor digitado errado 8, pagamento em dobro 3, empresa errada 2, compra não aprovada 2, boleto suspeito 1",
    "secao": "Base do desafio"
   },
   {
    "ok": true,
-   "texto": "860 títulos conferidos, 0 alertas (nenhum falso positivo)",
+   "texto": "859 títulos conferidos, 0 alertas (nenhum falso positivo)",
    "secao": "Base sem problemas: zero alarmes falsos"
   },
   {
@@ -43,13 +43,53 @@
   },
   {
    "ok": true,
-   "texto": "Boleto de outra empresa: 10/10 detectados com o tipo certo",
+   "texto": "Boleto suspeito: 10/10 detectados com o tipo certo",
    "secao": "Problemas novos em 10 sorteios"
   },
   {
    "ok": true,
    "texto": "alertas que não deviam existir: 0",
    "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "Boleto cancelado: 5/5 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
+   "texto": "Boleto suspeito: 5/5 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
+   "texto": "Nota cancelada: 5/5 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
+   "texto": "Mercadoria não chegou: 7/7 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
+   "texto": "Lançamento indevido: 5/5 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
+   "texto": "Fornecedor inativo: 5/5 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
+   "texto": "Pagamento dividido: 15/15 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
+   "texto": "alertas que não deviam existir: 0",
+   "secao": "Regras novas da política"
   },
   {
    "ok": true,
@@ -164,5 +204,5 @@
    "extras": 0
   }
  ],
- "quando": "07/11 11:15"
+ "quando": "07/11 11:39"
 }

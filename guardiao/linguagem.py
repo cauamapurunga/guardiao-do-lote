@@ -14,8 +14,15 @@ TIPOS = {
                           "cor": "#E5484D"},
     "OC_INVALIDA": {"titulo": "Compra não aprovada", "frase": "O pedido de compra está cancelado ou pendente em Compras.",
                     "cor": "#F5A524"},
-    "BOLETO_SUSPEITO": {"titulo": "Boleto de outra empresa", "frase": "Quem recebe o boleto não é o fornecedor do cadastro.",
+    "BOLETO_SUSPEITO": {"titulo": "Boleto suspeito", "frase": "O boleto não bate com o fornecedor ou não foi registrado no banco.",
                         "cor": "#E5484D"},
+    "BOLETO_BAIXADO": {"titulo": "Boleto cancelado", "frase": "O próprio fornecedor cancelou este boleto no banco.", "cor": "#F5A524"},
+    "NF_CANCELADA": {"titulo": "Nota cancelada", "frase": "A nota fiscal deste pagamento foi cancelada ou recusada.", "cor": "#E5484D"},
+    "SEM_RECEBIMENTO": {"titulo": "Mercadoria não chegou", "frase": "A nota chegou, mas a mercadoria não entrou no CD.", "cor": "#F5A524"},
+    "FRACIONAMENTO": {"titulo": "Pagamento dividido", "frase": "O pagamento foi quebrado em partes para caber na alçada.", "cor": "#F76B15"},
+    "LANCADOR_INVALIDO": {"titulo": "Lançamento indevido", "frase": "Quem lançou este título não tinha permissão para lançar.", "cor": "#E5484D"},
+    "ACIMA_DO_CONTRATO": {"titulo": "Acima do contrato", "frase": "A cobrança passa do valor fixo do contrato.", "cor": "#F76B15"},
+    "FORNECEDOR_INATIVO": {"titulo": "Fornecedor inativo", "frase": "O fornecedor está bloqueado ou inativo no cadastro.", "cor": "#F76B15"},
 }
 
 FEITO = {

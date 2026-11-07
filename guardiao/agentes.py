@@ -30,8 +30,15 @@ PESSOAS = {
     "PS05": "Diego Prado (coord. compras insumos/serviços)",
     "PS07": "Fernanda Rocha (gerente de logística)",
     "PS08": "Lívia Campos (jurídico)",
+    "PS06": "Bruno Sá (gerente de marketing)",
     "PS09": "Rafael Nunes (controller)",
+    "PS10": "Tiago Lins (coord. de facilities)",
+    "PS11": "Paula Viana (coord. de TI)",
 }
+PRIORIDADE = ["GOLPE_TROCA_CONTA", "LANCADOR_INVALIDO", "BOLETO_SUSPEITO", "NF_CANCELADA", "JA_PAGO_FORA_DO_LOTE",
+              "DUPLICIDADE", "FORNECEDOR_ERRADO", "FRACIONAMENTO", "FORNECEDOR_INATIVO", "OC_INVALIDA",
+              "SEM_RECEBIMENTO", "ACIMA_DO_CONTRATO", "VALOR_DIVERGENTE", "BOLETO_BAIXADO", "NF_NAO_ENCONTRADA",
+              "SEM_NF", "SEM_OC", "NF_ACIMA_DA_OC"]
 COMPRADOR_PESSOA = {"Carla Menezes": "PS04", "Diego Prado": "PS05"}
 
 CUSTO_RELACIONAMENTO = {"produto": 3000, "frete": 1500, "embalagens": 800, "insumos_capa": 800, "aluguel": 500,
@@ -181,6 +188,33 @@ class Guardiao:
             self._tool(c, "Auditor", "bloquear_titulo", c.titulo_id, "beneficiário do boleto não é o fornecedor")
             self._tool(c, "Auditor", "contatar_fornecedor", c.fornecedor_id, "confirmar boleto pelo canal do cadastro")
             c.status = "aguardando_humano"
+        elif t == "BOLETO_BAIXADO":
+            self.retirar_do_lote(c, "Analista", "o fornecedor cancelou este boleto no banco")
+            self._tool(c, "Analista", "contatar_fornecedor", c.fornecedor_id, "pedir o boleto novo pelo e-mail do cadastro")
+        elif t == "NF_CANCELADA":
+            self.retirar_do_lote(c, "Analista", "nota fiscal cancelada ou recusada")
+            self.cancelar_titulo(c, "Analista", "sem nota válida não há dívida")
+            self.acionar(c, "Analista", "PS04" if self.forn_cat.get(c.fornecedor_id) in ("produto", "embalagens") else "PS05",
+                         "título de nota cancelada: confirmar com o fornecedor se haverá nota nova")
+        elif t == "SEM_RECEBIMENTO":
+            self.retirar_do_lote(c, "Analista", "mercadoria ainda não entrou no CD")
+            self.acionar(c, "Analista", "PS04" if self.forn_cat.get(c.fornecedor_id) in ("produto", "embalagens") else "PS05",
+                         "a nota chegou mas a mercadoria não: confirmar a entrega antes de pagar")
+        elif t == "FRACIONAMENTO":
+            self.retirar_do_lote(c, "Auditor", "pagamento dividido para caber na alçada")
+            self.solicitar_aprovacao(c, "Auditor", "liberar com exceção", f"soma de {brl2(ach.extra.get('soma', c.valor))} passa da alçada do analista")
+        elif t == "LANCADOR_INVALIDO":
+            self.titulo_status[c.titulo_id] = "bloqueado"
+            self._tool(c, "Auditor", "bloquear_titulo", c.titulo_id, "lançado por quem não podia lançar")
+            self._tool(c, "Auditor", "abrir_incidente", c.titulo_id, "acesso indevido ao ERP", "auto")
+            self.acionar(c, "Auditor", "PS01", "título lançado por usuário sem permissão: revisar acesso e o título")
+        elif t == "ACIMA_DO_CONTRATO":
+            self.retirar_do_lote(c, "Analista", "valor acima do contrato")
+            g = ach.extra.get("gestor")
+            self.acionar(c, "Analista", g if g in PESSOAS else "PS01", "cobrança acima do valor do contrato: confirmar se houve aditivo")
+        elif t == "FORNECEDOR_INATIVO":
+            self.retirar_do_lote(c, "Analista", "fornecedor bloqueado ou inativo no cadastro")
+            self.acionar(c, "Analista", "PS01", "pagamento para fornecedor inativo")
         elif t in ("SEM_NF", "SEM_OC", "NF_ACIMA_DA_OC", "NF_NAO_ENCONTRADA"):
             self.retirar_do_lote(c, "Analista", c.resumo)
             self.solicitar_aprovacao(c, "Analista", "liberar com exceção", c.resumo, dupla=True)
@@ -189,8 +223,7 @@ class Guardiao:
     def executar(self, lotes: list[str] | None = None):
         achados = varrer(self.b, lotes)
         # um caso por título: o achado mais grave manda
-        prio = ["GOLPE_TROCA_CONTA", "BOLETO_SUSPEITO", "JA_PAGO_FORA_DO_LOTE", "DUPLICIDADE", "FORNECEDOR_ERRADO",
-                "OC_INVALIDA", "VALOR_DIVERGENTE", "NF_NAO_ENCONTRADA", "SEM_NF", "SEM_OC", "NF_ACIMA_DA_OC"]
+        prio = PRIORIDADE
         por_titulo: dict[str, list[Achado]] = collections.defaultdict(list)
         for a in achados:
             por_titulo[a.titulo_id].append(a)

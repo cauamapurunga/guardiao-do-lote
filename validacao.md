@@ -1,10 +1,10 @@
 # Validação do Guardião do Lote
 
 ## 1. Base do desafio
-- ✅ 54 títulos com problema em 876 da agenda: possível golpe 25, nota lançada duas vezes 13, valor digitado errado 8, pagamento em dobro 3, empresa errada 2, compra não aprovada 2, boleto de outra empresa 1
+- ✅ 54 títulos com problema em 876 da agenda: possível golpe 25, nota lançada duas vezes 13, valor digitado errado 8, pagamento em dobro 3, empresa errada 2, compra não aprovada 2, boleto suspeito 1
 
 ## 2. Base limpa: tem que dar zero alertas
-- ✅ 860 títulos conferidos, 0 alertas (nenhum falso positivo)
+- ✅ 859 títulos conferidos, 0 alertas (nenhum falso positivo)
 
 ## 3. Problemas novos, em fornecedores e valores diferentes dos originais
 
@@ -27,7 +27,17 @@
 - ✅ Pagamento em dobro: 10/10 detectados com o tipo certo
 - ✅ Empresa errada: 10/10 detectados com o tipo certo
 - ✅ Compra não aprovada: 10/10 detectados com o tipo certo
-- ✅ Boleto de outra empresa: 10/10 detectados com o tipo certo
+- ✅ Boleto suspeito: 10/10 detectados com o tipo certo
+- ✅ alertas que não deviam existir: 0
+
+## 3b. Regras da política que não apareceram na base de treino
+- ✅ Boleto cancelado: 5/5 detectados com o tipo certo
+- ✅ Boleto suspeito: 5/5 detectados com o tipo certo
+- ✅ Nota cancelada: 5/5 detectados com o tipo certo
+- ✅ Mercadoria não chegou: 7/7 detectados com o tipo certo
+- ✅ Lançamento indevido: 5/5 detectados com o tipo certo
+- ✅ Fornecedor inativo: 5/5 detectados com o tipo certo
+- ✅ Pagamento dividido: 15/15 detectados com o tipo certo
 - ✅ alertas que não deviam existir: 0
 
 ## 4. IDs trocados e linhas embaralhadas: resultado tem que ser igual
@@ -42,6 +52,6 @@
 - ✅ número de título inventado é barrado
 - ✅ a IA nunca decide pagamento: quem retira, cancela ou bloqueia são as regras das políticas
 
-Tempo total: 38s
+Tempo total: 80s
 
 **Resultado: tudo certo.**

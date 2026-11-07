@@ -279,7 +279,9 @@ def boleto(b: Bases, A: pd.DataFrame) -> list[Achado]:
     return out
 
 
-CHECAGENS = [troca_bancaria_suspeita, ja_pago_fora_do_lote, duplicidade, tres_vias, boleto]
+from .regras_extra import EXTRAS  # noqa: E402
+
+CHECAGENS = [troca_bancaria_suspeita, ja_pago_fora_do_lote, duplicidade, tres_vias, boleto] + EXTRAS
 
 
 def varrer(b: Bases, lotes: list[str] | None = None) -> list[Achado]:
