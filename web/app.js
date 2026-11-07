@@ -100,7 +100,10 @@ function renderConfia() {
   const v = E.validacao;
   if (!v) { $('#proof').innerHTML = '<p class="mut">Rode <code>py validar.py</code> para gerar a prova.</p>'; return; }
   $('#cfQuando').textContent = `rodado em ${v.quando}`;
-  const s = v.sorteios, inj = s.reduce((a, x) => a + x.injetados, 0), ok = s.reduce((a, x) => a + x.certos, 0), extra = s.reduce((a, x) => a + x.extras, 0);
+  const s = v.sorteios || [], p = v.politica || { injetados: 0, certos: 0, extras: 0, tipos: 0 };
+  const inj = s.reduce((a, x) => a + x.injetados, 0) + p.injetados, ok = s.reduce((a, x) => a + x.certos, 0) + p.certos,
+    extra = s.reduce((a, x) => a + x.extras, 0) + p.extras;
+  const nTipos = new Set(v.itens.filter(i => /detectados/.test(i.texto)).map(i => i.texto.split(':')[0])).size;
   const sec = n => v.itens.filter(i => i.secao.startsWith(n));
   const okSec = n => sec(n).every(i => i.ok);
   const limpa = (sec('Base sem')[0] || {}).texto || '';
@@ -108,7 +111,7 @@ function renderConfia() {
   const card = (bom, big, txt) => `<div class="card"><span class="ck ${bom ? '' : 'bad'}">${bom ? ICO_OK : ICO_X}</span><b class="num">${big}</b><span class="mut">${txt}</span></div>`;
   $('#proof').innerHTML =
     card(okSec('Base sem'), '0', `alarmes falsos em ${nLimpa} títulos sem problema`) +
-    card(ok === inj && extra === 0, `${ok}/${inj}`, 'problemas novos achados, com o tipo certo, em 10 sorteios') +
+    card(ok === inj && extra === 0, `${ok}/${inj}`, `problemas plantados achados com o tipo certo (${nTipos} tipos, ${s.length + (p.injetados ? 5 : 0)} sorteios)`) +
     card(okSec('Dados emb'), 'Igual', 'resultado com todos os IDs trocados e as linhas embaralhadas') +
     card(okSec('IA'), '0', 'dados inventados pela IA que passam pela trava');
   $('#checks').innerHTML = v.itens.map(i => `<div><span class="${i.ok ? 'o' : 'x'}">${i.ok ? ICO_OK : ICO_X}</span><span>${esc(i.texto)}</span></div>`).join('');

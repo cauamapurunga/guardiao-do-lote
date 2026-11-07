@@ -117,7 +117,7 @@
     <div><h3 style="margin-bottom:10px">Todas as checagens</h3><div class="card checks" id="checks"></div></div>
     <div><h3 style="margin-bottom:10px">10 sorteios com problemas novos</h3>
       <div class="card"><table><thead><tr><th>Sorteio</th><th class="r">Injetados</th><th class="r">Achados</th><th class="r">Perdidos</th><th class="r">A mais</th></tr></thead><tbody id="tSort"></tbody></table></div>
-      <p class="mut" style="margin-top:12px;font-size:13px">Em cada sorteio, 7 tipos de problema são colocados em fornecedores, valores e títulos diferentes dos originais (inclusive golpe confirmado por um telefone recém-trocado). O motor não conhece esses casos antes.</p>
+      <p class="mut" style="margin-top:12px;font-size:13px">Em cada sorteio, 7 tipos de problema são colocados em fornecedores, valores e títulos diferentes dos originais (inclusive golpe confirmado por um telefone recém-trocado). O motor não conhece esses casos antes. Em mais 5 sorteios, entram as regras da política que não apareceram nos dados do desafio: boleto fora do DDA ou cancelado, nota cancelada, mercadoria que não chegou, lançamento indevido, fornecedor inativo, cobrança acima do contrato e pagamento dividido. Resultado na lista ao lado.</p>
     </div>
   </div>
   <div class="sec card" style="padding:22px">
@@ -138,9 +138,11 @@
     <div class="card" style="--c:#b07a00"><h3 class="nome"><i></i>Pessoas</h3><p class="mut">Recebem no Telegram só o que é delas, com as evidências, e decidem com um toque.</p><div><code>solicitar_aprovacao</code><code>acionar_pessoa</code></div></div>
   </div>
   <div class="sec rules">
-    <div class="card"><h3>O agente faz sozinho</h3><ul><li>Tira do lote qualquer título suspeito</li><li>Cancela a cópia de uma nota lançada duas vezes (até R$ 5 mil)</li><li>Corrige o valor pela nota fiscal (até R$ 5 mil)</li><li>Bloqueia o fornecedor com conta suspeita</li><li>Abre incidente e propõe correção de processo</li></ul></div>
-    <div class="card"><h3>O agente chama alguém</h3><ul><li>Troca de dado bancário: aprovação dupla (Renata + aprovador)</li><li>Acima de R$ 50 mil: diretora financeira</li><li>Golpe: jurídico</li><li>Pagamento feito por fora: tesoureiro</li><li>Compra cancelada: comprador</li></ul></div>
+    <div class="card"><h3>O agente faz sozinho</h3><ul><li>Tira do lote qualquer título suspeito</li><li>Cancela a cópia de uma nota lançada duas vezes (até R$ 5 mil)</li><li>Corrige o valor pela nota fiscal (até R$ 5 mil)</li><li>Cancela o título de nota cancelada (até R$ 5 mil)</li><li>Bloqueia o fornecedor com conta suspeita e o título lançado por quem não podia</li><li>Abre incidente e propõe correção de processo</li></ul></div>
+    <div class="card"><h3>O agente chama alguém</h3><ul><li>Troca de dado bancário: aprovação dupla (Renata + aprovador)</li><li>Acima de R$ 50 mil: diretora financeira</li><li>Golpe: jurídico</li><li>Pagamento feito por fora: tesoureiro</li><li>Compra cancelada ou mercadoria que não chegou: Compras</li><li>Cobrança acima do contrato: gestor do contrato</li><li>Lançamento indevido ou fornecedor inativo: coordenação do contas a pagar</li></ul></div>
   </div>
+  <div class="sec card" style="padding:22px"><h3>O que é conferido em cada título</h3>
+    <ul class="confere"><li>Conta bancária trocada sem ligação de confirmação</li><li>Pagamento já feito por fora (extrato e DDA)</li><li>Nota lançada duas vezes</li><li>Valor diferente da nota fiscal</li><li>Pagamento para empresa diferente da que emitiu a nota</li><li>Pedido de compra cancelado ou pendente</li><li>Boleto de outro CNPJ ou fora do DDA</li><li>Boleto cancelado pelo fornecedor</li><li>Nota cancelada ou recusada</li><li>Mercadoria que não entrou no CD</li><li>Pagamento dividido para caber na alçada</li><li>Lançado por quem não podia lançar</li><li>Cobrança acima do contrato de valor fixo</li><li>Fornecedor bloqueado ou inativo</li></ul></div>
   <div class="sec"><h2 style="margin-bottom:14px">Palavras que aparecem no app</h2><div class="card gloss" id="gloss"></div></div>
   <p class="mut sec" style="margin-top:28px">As regras vêm de <code>politicas.csv</code> e <code>ferramentas.csv</code>. Mudou a política, muda o agente — sem mexer no código.</p>
 </section>

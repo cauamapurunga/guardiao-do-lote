@@ -15,7 +15,19 @@ Time de agentes de IA de **contas a pagar** do Gogroup. Antes de cada lote de re
 | 🔢 Vírgula deslocada | título × duplicata do XML (×10 / ÷10) | `corrigir_lancamento` até R$ 5 mil | aprovador acima disso |
 | 🏷️ Fornecedor errado | raiz do CNPJ da NF ≠ fornecedor do título (Cartonart × Gráfica Cartonar) | retira do lote | aprovação da correção |
 | 📦 OC cancelada ou pendente | Compras | retira do lote | comprador (PS04/PS05) |
-| 🧾 Boleto suspeito | CNPJ do beneficiário ≠ fornecedor; banco fora do histórico | bloqueia e contata pelo canal do cadastro | — |
+| 🧾 Boleto suspeito | CNPJ do beneficiário ≠ fornecedor; banco fora do histórico; linha digitável fora do DDA | bloqueia e contata pelo canal do cadastro | — |
+
+**Regras da política que não apareceram na base do desafio** (em `guardiao/regras_extra.py`, testadas com problemas plantados):
+
+| Problema | Como detecta | O que o agente faz sozinho | Quem ele chama |
+|---|---|---|---|
+| Boleto já pago ou cancelado no banco | situação do título no DDA (`liquidado` / `baixado pelo beneficiário`) | retira do lote; pede o boleto novo | tesoureiro, se já pago |
+| Nota cancelada ou recusada | situação na SEFAZ ou manifestação do destinatário | retira e cancela (até R$ 5 mil) | Compras |
+| Mercadoria não chegou | NF de produto sem recebimento no WMS há 20+ dias (desliga se não houver WMS) | retira do lote | Compras |
+| Pagamento dividido | 2+ títulos de até R$ 5 mil, mesmo fornecedor e dia, soma acima da alçada e parcelas que não existem na nota | retira do lote | aprovação como exceção |
+| Lançamento indevido | usuário desconhecido, já desligado ou fora do contas a pagar | bloqueia o título e abre incidente | coordenação de CP (PS01) |
+| Acima do contrato | contrato de valor fixo, título acima de valor mensal + 1% (mín. R$ 50) | retira do lote | gestor do contrato |
+| Fornecedor inativo | `status_cadastro` diferente de ativo | retira do lote | coordenação de CP (PS01) |
 
 O **Auditor** também procura a causa raiz. Exemplo: 8 títulos com vírgula deslocada vieram do mesmo analista júnior, admitido em 01/10, e foi ele também quem aceitou a troca de conta do golpe. A partir disso ele propõe uma trava no ERP e treinamento.
 
@@ -42,7 +54,7 @@ O que você aprova no Telegram aparece no app na hora, e vice-versa. No Telegram
 ## Como sabemos que está certo (`validar.py`)
 
 1. **Base limpa**: corrige cada problema e roda de novo → 0 alertas em 860 títulos (zero falso positivo).
-2. **Problemas novos**: em 10 sorteios, injeta 7 tipos de problema em fornecedores e valores diferentes dos originais → 203/203 achados com o tipo certo, nenhum alerta a mais.
+2. **Problemas novos**: em 10 sorteios, injeta 7 tipos de problema em fornecedores e valores diferentes dos originais → 203/203 achados com o tipo certo, nenhum alerta a mais. Em mais 5 sorteios, as regras da política (as da tabela acima e boleto fora do DDA) → 52/52. Total: **255/255, 14 tipos, 0 alarmes falsos**.
 3. **Dados embaralhados**: todos os IDs trocados e linhas embaralhadas → resultado idêntico.
 4. **IA não inventa**: todo texto da IA é conferido contra as evidências; valor ou título que não existe faz o texto ser descartado. A IA nunca decide pagamento.
 

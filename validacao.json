@@ -83,6 +83,11 @@
   },
   {
    "ok": true,
+   "texto": "Acima do contrato: 5/5 detectados com o tipo certo",
+   "secao": "Regras novas da política"
+  },
+  {
+   "ok": true,
    "texto": "Pagamento dividido: 15/15 detectados com o tipo certo",
    "secao": "Regras novas da política"
   },
@@ -204,5 +209,11 @@
    "extras": 0
   }
  ],
- "quando": "07/11 11:39"
+ "politica": {
+  "tipos": 8,
+  "injetados": 52,
+  "certos": 52,
+  "extras": 0
+ },
+ "quando": "07/11 11:47"
 }

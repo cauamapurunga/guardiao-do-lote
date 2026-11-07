@@ -37,6 +37,7 @@
 - ✅ Mercadoria não chegou: 7/7 detectados com o tipo certo
 - ✅ Lançamento indevido: 5/5 detectados com o tipo certo
 - ✅ Fornecedor inativo: 5/5 detectados com o tipo certo
+- ✅ Acima do contrato: 5/5 detectados com o tipo certo
 - ✅ Pagamento dividido: 15/15 detectados com o tipo certo
 - ✅ alertas que não deviam existir: 0
 
@@ -52,6 +53,6 @@
 - ✅ número de título inventado é barrado
 - ✅ a IA nunca decide pagamento: quem retira, cancela ou bloqueia são as regras das políticas
 
-Tempo total: 80s
+Tempo total: 78s
 
 **Resultado: tudo certo.**

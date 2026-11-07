@@ -79,6 +79,9 @@ def consequencias(caso: dict, n_mesmo_fornecedor: int = 1) -> tuple[str, str]:
         if t == "JA_PAGO_FORA_DO_LOTE":
             return ("O título é cancelado porque já foi pago por fora. Nada sai em dobro.",
                     "O título continua fora do lote, sem pagar, até o tesoureiro conferir o extrato.")
+        if t == "NF_CANCELADA":
+            return ("O título é cancelado porque a nota não vale mais. Se vier nota nova, lança-se de novo.",
+                    "O título continua fora do lote, sem pagar, até Compras falar com o fornecedor.")
         return ("A cópia é cancelada. A nota é paga uma vez só, pelo título original.",
                 "A cópia continua fora do lote, sem pagar. O título original segue normal.")
     if acao.startswith("corrigir_lancamento valor"):

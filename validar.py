@@ -6,7 +6,7 @@ Roda 4 testes e imprime um relatório ✅/❌ (também salvo em validacao.md):
   2. Base limpa: corrige cada problema encontrado e roda de novo. Tem que dar ZERO alertas
      (prova que os outros ~820 títulos não geram falso positivo).
   3. Problemas novos: em 10 sorteios, injeta 7 tipos de problema em fornecedores, valores e títulos
-     DIFERENTES dos originais. Tem que achar todos, com o tipo certo, e nada além deles.
+     DIFERENTES dos originais (e mais 8 regras da política em 5 sorteios). Tem que achar todos, com o tipo certo, e nada além deles.
   4. Embaralhado: troca todos os IDs de fornecedor e título e embaralha a ordem das linhas.
      O resultado tem que ser o mesmo (nada está decorado).
 
@@ -262,6 +262,13 @@ def injetar_extras(base: Bases, seed: int, proibidos: set[str]) -> tuple[Bases, 
     r = sortear()
     b.fornecedores.loc[b.fornecedores.fornecedor_id == r.fornecedor_id, "status_cadastro"] = "bloqueado"
     esperado[r.titulo_id] = "FORNECEDOR_INATIVO"
+    # contrato de valor fixo cobrado acima: o fornecedor reajusta por conta própria
+    fixos = b.contratos[(b.contratos.valor_variavel.astype(str).str.lower() == "não") & b.contratos.oc_id.notna()]
+    r = sortear(lambda c: c.oc_id.isin(fixos.oc_id), sozinho=False)
+    novo_valor = round(float(r.valor) * rnd.uniform(1.08, 1.25), 2)
+    b.titulos.loc[b.titulos.titulo_id == r.titulo_id, "valor"] = novo_valor
+    b.agenda.loc[b.agenda.titulo_id == r.titulo_id, "valor"] = novo_valor
+    esperado[r.titulo_id] = "ACIMA_DO_CONTRATO"
     # pagamento dividido em 3 para caber na alçada (sem nota)
     r = sortear()
     base_t = b.titulos[b.titulos.titulo_id == r.titulo_id].iloc[0]
@@ -385,6 +392,7 @@ def main():
     for tp in tot_t:
         reg(ok_t[tp] == tot_t[tp], f"{LG.tipo(tp)['titulo']}: {ok_t[tp]}/{tot_t[tp]} detectados com o tipo certo")
     reg(extras_b == 0, f"alertas que não deviam existir: {extras_b}")
+    politica = {"tipos": len(tot_t), "injetados": sum(tot_t.values()), "certos": sum(ok_t.values()), "extras": extras_b}
 
     print("\n4) IDs trocados e linhas embaralhadas"); secao[0] = "Dados embaralhados: nada decorado"
     linhas += ["", "## 4. IDs trocados e linhas embaralhadas: resultado tem que ser igual"]
@@ -438,7 +446,7 @@ def main():
                "**Resultado: " + ("tudo certo." if ok_geral else "há falhas; ver acima.") + "**"]
     open("validacao.md", "w", encoding="utf-8").write("\n".join(linhas))
     import json
-    json.dump({"ok": ok_geral, "itens": itens, "sorteios": sorteios, "quando": time.strftime("%d/%m %H:%M")},
+    json.dump({"ok": ok_geral, "itens": itens, "sorteios": sorteios, "politica": politica, "quando": time.strftime("%d/%m %H:%M")},
               open("validacao.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"\n{'✅ TUDO CERTO' if ok_geral else '❌ HÁ FALHAS'} · relatório salvo em validacao.md ({time.time() - t0:.0f}s)")
     sys.exit(0 if ok_geral else 1)
