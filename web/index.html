@@ -15,10 +15,7 @@
     <button data-v="agentes">Agentes ao vivo</button>
     <button data-v="decisoes">Decisões <span class="badge" id="nPend">0</span></button>
     <button data-v="casos">Casos</button>
-    <button data-v="lotes">Lotes</button>
-    <button data-v="caixa">E-mails</button>
     <button data-v="confia">Confiabilidade</button>
-    <button data-v="como">Como funciona</button>
   </nav>
   <div class="status"><span><i id="sTg"></i>Telegram</span><span><i id="sIa"></i>IA</span></div>
 </div></header>
@@ -53,8 +50,6 @@
     <span class="mut" id="conferido">—</span>
     <button class="btn sm" id="btnConferir">Conferir agora</button>
     <button class="btn sm" id="btnSimular">Simular um dia novo</button>
-    <button class="btn sm" id="btnResumo">Mandar resumo do dia no Telegram</button>
-    <a class="btn sm" href="/api/auditoria.csv">Baixar relatório de auditoria</a>
   </div>
   <div class="sec">
     <div class="sec-h"><h2>O que ele encontrou</h2><span class="mut">valor que sairia errado, por tipo</span></div>
@@ -91,7 +86,7 @@
 <section class="view" id="v-casos">
   <div class="sec-h"><div><h2>Tudo o que o agente encontrou</h2></div><span class="mut" id="cConta"></span></div>
   <div class="filters" id="filtros"></div>
-  <div class="card"><table><thead><tr><th>Problema</th><th>Fornecedor</th><th>Lote</th><th class="r">Valor</th><th>Situação</th></tr></thead><tbody id="tCasos"></tbody></table></div>
+  <div class="card"><table><thead><tr><th>Problema</th><th>Fornecedor</th><th>Sai do banco</th><th class="r">Valor</th><th>Situação</th></tr></thead><tbody id="tCasos"></tbody></table></div>
 </section>
 
 <!-- LOTES -->
@@ -113,6 +108,8 @@
   <div class="sec-h"><div><h2>Como sabemos que está certo</h2>
   <p class="mut" style="margin-top:4px">Resultado do <code>py validar.py</code>, que qualquer pessoa pode rodar de novo.</p></div><span class="mut" id="cfQuando"></span></div>
   <div class="proof" id="proof"></div>
+  <div class="sec card" style="padding:22px"><h3>O que é conferido em cada título</h3>
+    <ul class="confere"><li>Conta bancária trocada sem ligação de confirmação</li><li>Pagamento já feito por fora (extrato e DDA)</li><li>Nota lançada duas vezes</li><li>Valor diferente da nota fiscal</li><li>Pagamento para empresa diferente da que emitiu a nota</li><li>Pedido de compra cancelado ou pendente</li><li>Boleto de outro CNPJ ou fora do DDA</li><li>Boleto cancelado pelo fornecedor</li><li>Nota cancelada ou recusada</li><li>Mercadoria que não entrou no CD</li><li>Pagamento dividido para caber na alçada</li><li>Lançado por quem não podia lançar</li><li>Cobrança acima do contrato de valor fixo</li><li>Fornecedor bloqueado ou inativo</li></ul></div>
   <div class="sec two">
     <div><h3 style="margin-bottom:10px">Todas as checagens</h3><div class="card checks" id="checks"></div></div>
     <div><h3 style="margin-bottom:10px">10 sorteios com problemas novos</h3>
@@ -122,7 +119,7 @@
   </div>
   <div class="sec card" style="padding:22px">
     <h3>E a IA?</h3>
-    <p class="mut" style="margin-top:6px">A IA lê e-mails (Jev) e escreve resumos (chat). <b style="color:var(--ink)">Ela nunca decide pagamento</b>: quem retira, cancela e bloqueia são as regras das políticas. Todo texto da IA é conferido: se citar valor, título ou data que não está nas evidências, é descartado e vai um texto padrão. Classificação com confiança abaixo de 0,7 vai para uma pessoa.</p>
+    <p class="mut" style="margin-top:6px">A IA lê e-mails (Jev) e escreve resumos (chat). <b style="color:var(--ink)">Ela nunca decide pagamento</b>: quem retira, cancela e bloqueia são as regras das políticas. Todo texto da IA é conferido: se citar valor, título ou data que não está nas evidências, é descartado e vai um texto padrão. Classificação com confiança abaixo de 0,7 vai para uma pessoa. <a href="#caixa">Ver os e-mails que a IA leu →</a></p>
     <p class="mut" style="margin-top:10px;font-size:13px" id="iaUso"></p>
   </div>
 </section>
@@ -141,8 +138,6 @@
     <div class="card"><h3>O agente faz sozinho</h3><ul><li>Tira do lote qualquer título suspeito</li><li>Cancela a cópia de uma nota lançada duas vezes (até R$ 5 mil)</li><li>Corrige o valor pela nota fiscal (até R$ 5 mil)</li><li>Cancela o título de nota cancelada (até R$ 5 mil)</li><li>Bloqueia o fornecedor com conta suspeita e o título lançado por quem não podia</li><li>Abre incidente e propõe correção de processo</li></ul></div>
     <div class="card"><h3>O agente chama alguém</h3><ul><li>Troca de dado bancário: aprovação dupla (Renata + aprovador)</li><li>Acima de R$ 50 mil: diretora financeira</li><li>Golpe: jurídico</li><li>Pagamento feito por fora: tesoureiro</li><li>Compra cancelada ou mercadoria que não chegou: Compras</li><li>Cobrança acima do contrato: gestor do contrato</li><li>Lançamento indevido ou fornecedor inativo: coordenação do contas a pagar</li></ul></div>
   </div>
-  <div class="sec card" style="padding:22px"><h3>O que é conferido em cada título</h3>
-    <ul class="confere"><li>Conta bancária trocada sem ligação de confirmação</li><li>Pagamento já feito por fora (extrato e DDA)</li><li>Nota lançada duas vezes</li><li>Valor diferente da nota fiscal</li><li>Pagamento para empresa diferente da que emitiu a nota</li><li>Pedido de compra cancelado ou pendente</li><li>Boleto de outro CNPJ ou fora do DDA</li><li>Boleto cancelado pelo fornecedor</li><li>Nota cancelada ou recusada</li><li>Mercadoria que não entrou no CD</li><li>Pagamento dividido para caber na alçada</li><li>Lançado por quem não podia lançar</li><li>Cobrança acima do contrato de valor fixo</li><li>Fornecedor bloqueado ou inativo</li></ul></div>
   <div class="sec"><h2 style="margin-bottom:14px">Palavras que aparecem no app</h2><div class="card gloss" id="gloss"></div></div>
   <p class="mut sec" style="margin-top:28px">As regras vêm de <code>politicas.csv</code> e <code>ferramentas.csv</code>. Mudou a política, muda o agente — sem mexer no código.</p>
 </section>

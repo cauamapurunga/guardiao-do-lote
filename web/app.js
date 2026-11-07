@@ -83,9 +83,9 @@ function renderCasos() {
   const lista = E.casos.filter(c => !filtro || c.tipo_titulo === filtro);
   $('#cConta').textContent = `${lista.length} casos`;
   $('#tCasos').innerHTML = lista.map(c => `<tr data-ver="${c.id}">
-    <td>${pill(c)}<div style="margin-top:6px;font-size:14px">${esc(c.tipo_frase)}</div></td>
-    <td>${esc(c.fornecedor)}<div class="mut" style="font-size:12px">${c.titulo_id}</div></td>
-    <td>${esc(c.lote)}<div class="mut" style="font-size:12px">sai ${esc(c.fechamento)}</div></td>
+    <td>${pill(c)}</td>
+    <td>${esc(c.fornecedor)}<div class="mut" style="font-size:12px">título ${c.titulo_id}</div></td>
+    <td class="num" style="white-space:nowrap">${esc(c.fechamento)}</td>
     <td class="r num">${c.valor_fmt}</td>
     <td><span class="st ${STATUS[c.status][1]}">${STATUS[c.status][0]}</span></td></tr>`).join('');
 }
@@ -240,7 +240,7 @@ $('#btnConferir').onclick = async () => {
   if (!r.ok) return toast(j.detail || 'Não deu para conferir');
   toast(`Conferido às ${j.conferido_em}: ${j.casos} casos.`); carregar();
 };
-$('#btnResumo').onclick = async () => {
+if ($('#btnResumo')) $('#btnResumo').onclick = async () => {
   const r = await fetch('/api/resumo/telegram', {method: 'POST'}); const j = await r.json();
   toast(r.ok ? 'Resumo enviado no Telegram.' : (j.detail || 'Não deu para enviar'));
 };
