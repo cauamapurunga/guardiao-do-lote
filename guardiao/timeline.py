@@ -49,13 +49,18 @@ def construir(g: Guardiao) -> dict:
                                  f"{len(gl)} títulos, {rs(gl.valor.sum())}. Despachando conferência."})
         if not leu_caixa:
             leu_caixa = True
+            n_msg = len(g.b.comunicacoes)
             eventos.append({"t": "pensa", "agente": "Leitor",
-                            "texto": "Lendo os 246 e-mails de fornecedores. Classificando pedidos de troca de conta, "
+                            "texto": f"Lendo os {n_msg} e-mails de fornecedores. Procurando pedidos de troca de conta, "
                                      "boletos e cobranças, e cruzando o remetente com o cadastro."})
+            # o que o Leitor achou vem das provas reais dos casos de golpe (nada escrito à mão)
+            prova = next((e for c in g.casos if c.tipo == "GOLPE_TROCA_CONTA" for e in c.evidencias
+                          if "pedido veio de" in str(e)), None)
             eventos.append({"t": "tool", "agente": "Leitor", "ferramenta": "listar_comunicacoes", "alvo": "caixa CP",
-                            "detalhe": "e-mail de financeiro@embalartte.com.br pedindo troca de conta: domínio imita embalarte.com.br",
+                            "detalhe": prova or f"{n_msg} e-mails lidos: nenhum pedido de troca de conta suspeito",
                             "modo": "auto"})
-            eventos.append({"t": "handoff", "de": "Leitor", "para": "Auditor", "texto": "pedido de troca de conta suspeito"})
+            if prova:
+                eventos.append({"t": "handoff", "de": "Leitor", "para": "Auditor", "texto": "pedido de troca de conta suspeito"})
         eventos.append({"t": "confere", "agente": "Analista", "n": int(len(gl)),
                         "texto": f"Conferindo {len(gl)} títulos: OC × NF-e × duplicata × DDA × extrato."})
         eventos.append({"t": "pensa", "agente": "Auditor",
