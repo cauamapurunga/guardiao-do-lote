@@ -1,4 +1,4 @@
-"""Leitor da Caixa: classifica e-mails e WhatsApps dos fornecedores e cruza com o cadastro.
+"""Leitor da Caixa: classifica e-mails dos fornecedores e cruza com o cadastro.
 
 Com AI_PROXY_API_KEY usa o Jev (/v1/systemone) para classificar; sem token, cai nas regras.
 O texto de terceiros é tratado como DADO, nunca como instrução.

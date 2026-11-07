@@ -4,7 +4,7 @@ Agentes (papéis e ferramentas tirados de ferramentas.csv / politicas.csv):
   - Maestro (orquestrador): acompanha a agenda, abre cada lote antes do fechamento, despacha os casos
   - Analista CP: três vias, duplicidade, pagamento fora do lote, correções (alçada R$ 5 mil)
   - Auditor: fraude de cadastro e boleto, bloqueios, incidentes e causa raiz
-  - Leitor da Caixa: lê e-mails e WhatsApps (LLM quando disponível) e alimenta o Auditor
+  - Leitor da Caixa: lê e-mails (LLM quando disponível) e alimenta o Auditor
 Humanos entram por solicitar_aprovacao / acionar_pessoa (Telegram).
 """
 from __future__ import annotations

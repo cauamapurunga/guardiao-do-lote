@@ -152,7 +152,7 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
       </div>
       <div class="agents">
         <div class="agent" id="ag-Analista" style="--c:var(--blue)">
-          <div class="ahead"><img class="av" src="/assets/agentes/analista.png" alt=""><div><div class="an">Analista CP</div><div class="ar">confere nota, compra e banco · até R$ 5 mil</div></div><span class="st">ocioso</span></div>
+          <div class="ahead"><img class="av" src="/assets/agentes/analista.png" alt=""><div><div class="an">Analista</div><div class="ar">confere nota, compra e banco · até R$ 5 mil</div></div><span class="st">ocioso</span></div>
           <div class="think"></div>
           <div class="case"></div>
           <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
@@ -166,7 +166,7 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
           <div class="ameta"><span>ações <b class="n">0</b></span><span>segurado <b class="r">R$ 0</b></span></div>
         </div>
         <div class="agent" id="ag-Leitor" style="--c:var(--violet)">
-          <div class="ahead"><img class="av" src="/assets/agentes/leitor.png" alt=""><div><div class="an">Leitor da Caixa</div><div class="ar">lê e-mails e WhatsApps com IA</div></div><span class="st">ocioso</span></div>
+          <div class="ahead"><img class="av" src="/assets/agentes/leitor.png" alt=""><div><div class="an">Leitor</div><div class="ar">lê e-mails com IA</div></div><span class="st">ocioso</span></div>
           <div class="think"></div>
           <div class="case"></div>
           <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
@@ -310,9 +310,9 @@ function run(e){
   else if(e.t==='handoff'){ setOn(e.para,'recebeu caso'); wires([e.de,e.para]); log(e.de,'→ '+e.para, e.texto); }
   else if(e.t==='lote_fecha'){
     [...$('grid').children].forEach(c=>{ if(loteAtual && loteAtual.flag[c.dataset.t]) c.className='bad'; });
-    S.ok+=e.ok_valor; S.lotesFeitos++; setOn('Maestro','liberando lote'); wires();
+    S.ok+=e.ok_valor; S.lotesFeitos++; setOn('Maestro','lote conferido'); wires();
     type($('ag-Maestro').querySelector('.think'), `${e.lote} conferido: ${e.ok} títulos seguem para o banco (${brl(e.ok_valor)}), ${e.retidos} retidos${e.perda?` — ${brl(e.perda)} que sairiam indevidamente`:''}.`, dur*0.6/speed);
-    log('Maestro','liberar_lote',`${e.lote}: ${e.ok} ok · ${e.retidos} retidos`);
+    log('Maestro','conferencia_concluida',`${e.lote}: ${e.ok} ok · ${e.retidos} retidos`);
     const dots=$('lotes').children; if(dots[S.lotesFeitos-1]) dots[S.lotesFeitos-1].className='on';
   }
   kpis();

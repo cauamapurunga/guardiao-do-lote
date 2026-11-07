@@ -50,7 +50,7 @@ def construir(g: Guardiao) -> dict:
         if not leu_caixa:
             leu_caixa = True
             eventos.append({"t": "pensa", "agente": "Leitor",
-                            "texto": "Lendo 246 e-mails e WhatsApps da área. Classificando pedidos de troca de conta, "
+                            "texto": "Lendo os 246 e-mails de fornecedores. Classificando pedidos de troca de conta, "
                                      "boletos e cobranças, e cruzando o remetente com o cadastro."})
             eventos.append({"t": "tool", "agente": "Leitor", "ferramenta": "listar_comunicacoes", "alvo": "caixa CP",
                             "detalhe": "e-mail de financeiro@embalartte.com.br pedindo troca de conta: domínio imita embalarte.com.br",
