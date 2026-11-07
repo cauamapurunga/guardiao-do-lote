@@ -87,7 +87,9 @@ def construir(g: Guardiao) -> dict:
                       "modo": a.modo, "caso": _caso_min(c)}
                 eventos.append(ev)
                 if a.modo in ("aprovacao", "humano") and quem != "Humano":
-                    dec = next((x for x in c.acoes if x["ferramenta"] in ("aprovar_acao", "recusar_acao")), None)
+                    dec = next((x for x in reversed(c.acoes) if x["ferramenta"] in ("aprovar_acao", "recusar_acao")), None)
+                    if dec and c.status == "aguardando_aprovacao":   # só a 1ª de 2 aprovações
+                        dec = dict(dec, agente=dec["agente"][:-1] + " · falta a 2ª aprovação)")
                     eventos.append({"t": "humano", "agente": quem, "para": a.para, "ferramenta": a.ferramenta,
                                     "texto": a.detalhe, "caso": _caso_min(c),
                                     "decisao": ({"aprovado": dec["ferramenta"] == "aprovar_acao",

@@ -85,6 +85,7 @@ def caso_json(c) -> dict:
             if txt not in d["feito"]:
                 d["feito"].append(txt)
     d["pedido"] = L.pedido(c.aprovacao["acao"]) if c.aprovacao else None
+    d["ja_aprovaram"] = (c.aprovacao or {}).get("aprovado_por", []) if c.status == "aguardando_aprovacao" else []
     d["para"] = L.primeiro_nome(c.aprovacao["nome"]) if c.aprovacao else None
     avisos = [a for a in c.acoes if a["ferramenta"] == "acionar_pessoa"]
     d["avisado"] = [{"pessoa": L.primeiro_nome(a["para"]), "motivo": a["detalhe"]} for a in avisos]

@@ -198,8 +198,8 @@ def enviar_avisos(g, chat: str | None = None, pessoas: set | None = None) -> int
                 enviar_card(asdict(c), chat, "aviso", x["para"], x["detalhe"])
                 n += 1
                 break
-    if not n:
-        enviar("✅ Nenhum aviso para você agora.", chat)
+    if not n and pessoas is None:
+        enviar("✅ Nenhum aviso agora.", chat)
     return n
 
 
@@ -215,4 +215,10 @@ def rotear_pendentes(g, chat_principal: str | None) -> dict:
     resto = {p for p in donos if p not in cad}
     if resto and chat_principal:
         enviados["chat principal"] = enviar_pendentes(g, chat_principal, pessoas=resto)
+    # avisos (jurídico, tesoureiro, compras...): cada pessoa cadastrada recebe os seus, sem precisar pedir
+    avisados = {a["alvo"] for c in g.casos for a in c.acoes if a["ferramenta"] == "acionar_pessoa"}
+    for pid in sorted(avisados & set(cad)):
+        n = enviar_avisos(g, cad[pid], pessoas={pid})
+        if n:
+            enviados[f"aviso {contatos.primeiro(pid)}"] = n
     return enviados

@@ -54,11 +54,17 @@ function render() {
   renderDec(); renderCasos(); renderLotes(); renderConfia();
 }
 
+let filtroPessoa = '';
 function renderDec() {
-  const pend = E.casos.filter(c => c.status === 'aguardando_aprovacao');
+  const todos = E.casos.filter(c => c.status === 'aguardando_aprovacao');
+  const pessoas = [...new Set(todos.map(c => c.para))];
+  if (filtroPessoa && !pessoas.includes(filtroPessoa)) filtroPessoa = '';
+  $('#fDec').innerHTML = `<button class="chip ${!filtroPessoa ? 'on' : ''}" data-fp="">Todas (${todos.length})</button>` +
+    pessoas.map(p => `<button class="chip ${filtroPessoa === p ? 'on' : ''}" data-fp="${esc(p)}">Para ${esc(p)} (${todos.filter(c => c.para === p).length})</button>`).join('');
+  const pend = todos.filter(c => !filtroPessoa || c.para === filtroPessoa);
   const feitos = E.humanos.slice().reverse();
-  $('#dTitulo').textContent = pend.length ? `${pend.length} decisões esperando alguém` : 'Nada esperando decisão';
-  if (!selDec || !E.casos.find(c => c.id === selDec)) selDec = (pend[0] || E.casos[0]).id;
+  $('#dTitulo').textContent = pend.length ? `${pend.length} decisões esperando ${filtroPessoa || 'alguém'}` : 'Nada esperando decisão';
+  if (!selDec || !pend.find(c => c.id === selDec)) selDec = (pend[0] || E.casos[0]).id;
   pend.sort((a, b) => a.horas - b.horas || b.valor - a.valor);
   const quando = h => h < 48 ? `sai em ${h}h` : `sai em ${Math.round(h / 24)} dias`;
   $('#listaDec').innerHTML = pend.map(c => `
@@ -68,7 +74,8 @@ function renderDec() {
       <div class="meta"><span>${esc(c.fornecedor)}</span><span>Lote ${esc(c.lote)} · sai ${esc(c.fechamento)}</span></div></div>
       <div class="val num">${c.valor_fmt}</div>
       <div class="acts"><button class="btn ok sm" data-ap="${c.id}">Aprovar</button><button class="btn no sm" data-rc="${c.id}">Recusar</button>
-      <button class="btn sm" data-ver="${c.id}">Ver detalhes</button><span class="para">Para <b style="color:var(--ink)">${esc(c.para)}</b> · ${esc(c.pedido)}</span></div>
+      <button class="btn sm" data-ver="${c.id}">Ver detalhes</button><span class="para">Para <b style="color:var(--ink)">${esc(c.para)}</b>${c.aprovacao && c.aprovacao.dupla ? ' + outro aprovador (aprovação dupla)' : ''} · ${esc(c.pedido)}</span></div>
+      ${c.ja_aprovaram && c.ja_aprovaram.length ? `<div class="para" style="margin-top:8px;color:var(--amber, #a8740a)"><b>1 de 2 aprovações:</b> ${esc(c.ja_aprovaram.join(', '))}. Falta outra pessoa.</div>` : ''}
       <div class="cons"><div class="a"><b>Se aprovar</b>${esc(c.se_aprovar)}</div><div class="r"><b>Se recusar</b>${esc(c.se_recusar)}</div></div>
     </div>`).join('') + (feitos.length ? `<h3 style="margin:18px 0 4px">Já decidido</h3>` + feitos.map(h => `
     <div class="card item done"><div><div class="t">${h.aprovado ? 'Aprovado' : 'Recusado'} por ${esc(h.quem)}</div><div class="meta">${esc(h.caso)} · ${esc(h.resumo)}</div></div></div>`).join('') : '');
@@ -153,7 +160,8 @@ async function decidir(id, aprovar) {
   if (el) el.querySelectorAll('button').forEach(b => b.classList.add('loading'));
   const r = await fetch('/api/decidir', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({caso: id, aprovar, quem: 'Painel'})});
   if (!r.ok) { toast('Não deu para registrar a decisão. Tente de novo.'); if (el) el.querySelectorAll('button').forEach(b => b.classList.remove('loading')); return; }
-  toast(aprovar ? 'Aprovado. O agente já executou o restante.' : 'Recusado. O título segue bloqueado.');
+  const jc = await r.clone().json().catch(() => ({}));
+  toast(!aprovar ? 'Recusado. O título segue bloqueado.' : (jc.status === 'aguardando_aprovacao' ? 'Primeira aprovação registrada. É aprovação dupla: falta outra pessoa.' : 'Aprovado. O agente já executou o restante.'));
   if (el) { el.classList.add('leaving'); await new Promise(r => setTimeout(r, 330)); }
   await carregar();
 }
@@ -168,7 +176,7 @@ function ir(v) {
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-v],[data-go],[data-ap],[data-rc],[data-ver],[data-f],.item');
+  const t = e.target.closest('[data-v],[data-go],[data-ap],[data-rc],[data-ver],[data-f],[data-fp],.item');
   if (!t) return;
   if (t.dataset.v) return ir(t.dataset.v);
   if (t.dataset.go) return ir(t.dataset.go);
@@ -176,6 +184,7 @@ document.addEventListener('click', e => {
   if (t.dataset.rc) { e.stopPropagation(); return decidir(t.dataset.rc, false); }
   if (t.dataset.ver) { e.stopPropagation(); return abrir(t.dataset.ver); }
   if ('f' in t.dataset) { filtro = t.dataset.f || null; return renderCasos(); }
+  if ('fp' in t.dataset) { filtroPessoa = t.dataset.fp; return renderDec(); }
   if (t.classList.contains('item') && t.dataset.id) { selDec = t.dataset.id; renderDec(); }
 });
 $('#shade').onclick = fechar;

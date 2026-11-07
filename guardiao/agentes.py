@@ -275,6 +275,16 @@ class Guardiao:
         if not c or c.status != "aguardando_aprovacao":
             return c
         acao = c.aprovacao["acao"]
+        # aprovação dupla (política): duas pessoas diferentes; a primeira só registra, a segunda executa
+        if aprovado and c.aprovacao.get("dupla"):
+            ja = c.aprovacao.setdefault("aprovado_por", [])
+            if quem in ja:
+                return c                                   # a mesma pessoa não conta duas vezes
+            ja.append(quem)
+            if len(ja) < 2:
+                self._tool(c, f"Humano ({quem})", "aprovar_acao", c.titulo_id, f"{acao} (1ª de 2 aprovações)",
+                           "humano", c.aprovacao["nome"])
+                return c
         if aprovado:
             self._tool(c, f"Humano ({quem})", "aprovar_acao", c.titulo_id, acao, "humano", c.aprovacao["nome"])
             if acao.startswith("reverter_alteracao_cadastro"):

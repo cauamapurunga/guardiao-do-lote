@@ -88,6 +88,11 @@ def main():
                     continue
                 quem = contatos.nome(eu).split("(")[0].strip() if eu else cq["from"].get("first_name", "?")
                 c = g.decidir(cid, acao == "ap", f"{quem} (Telegram)")
+                if c and c.status == "aguardando_aprovacao" and (c.aprovacao or {}).get("aprovado_por"):
+                    quem_ja = ", ".join(c.aprovacao["aprovado_por"])
+                    tg.confirmar_clique(resp, f"✅ Aprovação registrada ({quem_ja}). É aprovação dupla: falta outra pessoa aprovar "
+                                              f"para o agente executar.\n{c.resumo}")
+                    continue
                 txt = (f"{'✅ Aprovado' if acao == 'ap' else '❌ Recusado'} por {quem}: {c.resumo}\n"
                        f"Agente executou: " + ", ".join(a["ferramenta"] for a in c.acoes[-3:])) if c else "Caso não encontrado."
                 tg.confirmar_clique(resp, txt)
@@ -113,8 +118,9 @@ def main():
                 else:
                     contatos.registrar(chat, pid)
                     n = sum(1 for c in g.casos if c.status == "aguardando_aprovacao" and (c.aprovacao or {}).get("pessoa") == pid)
+                    av = sum(1 for c in g.casos if any(a["ferramenta"] == "acionar_pessoa" and a["alvo"] == pid for a in c.acoes))
                     tg.enviar(f"👋 Pronto, <b>{contatos.nome(pid)}</b>. Daqui em diante este chat recebe só o que é seu.\n"
-                              f"Você tem {n} {'decisão esperando' if n == 1 else 'decisões esperando'} → /pendentes · avisos → /avisos\n"
+                              f"Você tem {n} {'decisão esperando' if n == 1 else 'decisões esperando'} → /pendentes · {av} {'aviso' if av == 1 else 'avisos'} → /avisos\n"
                               f"(para voltar a ver tudo: /sair)", chat)
             elif texto.startswith("/sair"):
                 pid = contatos.sair(chat)
@@ -134,7 +140,8 @@ def main():
             elif texto.startswith("/pendentes"):
                 tg.enviar_pendentes(g, chat, pessoas=so_eu)   # 1 abertura + 1 imagem com resumo e botões por caso
             elif texto.startswith("/avisos"):
-                tg.enviar_avisos(g, chat, pessoas=so_eu)
+                if not tg.enviar_avisos(g, chat, pessoas=so_eu):
+                    tg.enviar("✅ Nenhum aviso para você agora.", chat)
             elif tid:
                 tg.enviar(titulo(tid.group(0)), chat)
             else:
