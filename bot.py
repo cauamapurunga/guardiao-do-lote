@@ -77,7 +77,7 @@ def main():
         try:
             res = tg._call("getUpdates", timeout=25, offset=offset).get("result", [])
         except Exception as e:
-            print("Sem conexão com o Telegram agora; tentando de novo...", type(e).__name__)
+            print("Telegram:", e, "— tentando de novo em 3s")
             time.sleep(3)
             continue
         for u in res:

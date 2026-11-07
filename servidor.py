@@ -39,9 +39,9 @@ ESTADO: dict = {}
 _lock = threading.Lock()
 
 
-def iniciar(repetir_decisoes: list | None = None):
+def iniciar(repetir_decisoes: list | None = None, base=None):
     with _lock:
-        b = carregar()
+        b = base if base is not None else carregar()
         ESTADO["b"] = b
         ESTADO["g"] = Guardiao(b).executar()
         ESTADO["caixa"] = leitor_caixa.ler(b, usar_ia=False)
@@ -130,6 +130,7 @@ def estado():
             "por_tipo": [{"tipo": L.tipo(k)["titulo"], "cor": L.tipo(k)["cor"], **v} for k, v in p["por_tipo"].items()],
             "casos": casos, "lotes": lotes, "validacao": val, "log": log[-400:],
             "humanos": ESTADO["eventos_humanos"][-30:], "conferido_em": ESTADO.get("conferido_em"),
+            "simulacao": ESTADO.get("simulacao"),
             "telegram": {"token": bool(tg.token()), "chat": bool(tg.chat_id() or ESTADO.get("chat"))},
             "ia": {"ativa": ia.disponivel(), "uso": ia.resumo_uso(), "linhas": ia.USO["linhas"][-8:]},
             "causa_raiz": [asdict(a) for a in g.log if a.ferramenta in ("propor_correcao_processo", "abrir_incidente")]}
@@ -212,6 +213,7 @@ def explicar(caso_id: str):
 
 @app.post("/api/reiniciar")
 def reiniciar():
+    ESTADO.pop("simulacao", None)
     iniciar()
     return {"ok": True}
 
@@ -219,11 +221,30 @@ def reiniciar():
 @app.post("/api/conferir")
 def conferir():
     """Relê os arquivos dos sistemas e confere tudo de novo, mantendo as decisões já tomadas."""
+    ESTADO.pop("simulacao", None)
     try:
         iniciar(list(ESTADO.get("eventos_humanos", [])))
     except Exception as e:
         raise HTTPException(400, f"Não consegui ler os dados: {e}")
     return {"ok": True, "conferido_em": ESTADO["conferido_em"], "casos": len(ESTADO["g"].casos)}
+
+
+@app.post("/api/simular")
+def simular():
+    """Dia novo: coloca 7 problemas novos em fornecedores e valores sorteados e os agentes conferem de novo.
+    Mostra que o resultado depende dos dados, não de respostas decoradas."""
+    import random
+    import validar
+    from guardiao.deteccao import varrer
+    base = carregar()
+    seed = random.randint(1000, 999999)
+    proibidos = {a.fornecedor_id for a in varrer(base)}
+    novo, esperado = validar.injetar(base, seed, proibidos)
+    iniciar(base=novo)
+    achados = {c.titulo_id for c in ESTADO["g"].casos}
+    pegos = sum(1 for t in esperado if t in achados)
+    ESTADO["simulacao"] = {"seed": seed, "injetados": len(esperado), "pegos": pegos}
+    return ESTADO["simulacao"] | {"casos": len(ESTADO["g"].casos)}
 
 
 @app.get("/api/resumo")

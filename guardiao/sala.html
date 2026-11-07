@@ -64,8 +64,8 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 .agent.sent{width:min(560px,100%);margin:0 auto;min-height:0}
 .agent.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 12px 30px -18px rgba(17,17,17,.35)}
 .ahead{display:flex;align-items:center;gap:10px}
-.av{width:56px;height:56px;border-radius:14px;background:#000;flex:none;transition:transform .35s cubic-bezier(.16,1,.3,1)}
-.agent.on .av{transform:translateY(-3px) scale(1.06);box-shadow:0 8px 18px -8px var(--c)}
+.av{width:48px;height:48px;object-fit:contain;flex:none;transition:transform .35s cubic-bezier(.16,1,.3,1)}
+.agent.on .av{transform:translateY(-2px) scale(1.08)}
 .an{font-weight:700;font-size:14px} .ar{color:var(--mut);font-size:11px}
 .agent:not(.sent) .st{position:absolute;top:-11px;right:12px;border:1px solid var(--line2);background:#fff}
 .agent.on:not(.sent) .st{border-color:var(--c)}
@@ -308,6 +308,7 @@ function run(e){
   }
   else if(e.t==='handoff'){ setOn(e.para,'recebeu caso'); wires([e.de,e.para]); log(e.de,'→ '+e.para, e.texto); }
   else if(e.t==='lote_fecha'){
+    [...$('#grid').children].forEach(c=>{ if(loteAtual && loteAtual.flag[c.dataset.t]) c.className='bad'; });
     S.ok+=e.ok_valor; S.lotesFeitos++; setOn('Sentinela','liberando lote'); wires();
     type($('ag-Sentinela').querySelector('.think'), `${e.lote} conferido: ${e.ok} títulos seguem para o banco (${brl(e.ok_valor)}), ${e.retidos} retidos${e.perda?` — ${brl(e.perda)} que sairiam indevidamente`:''}.`, dur*0.6/speed);
     log('Sentinela','liberar_lote',`${e.lote}: ${e.ok} ok · ${e.retidos} retidos`);

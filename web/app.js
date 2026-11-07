@@ -48,7 +48,9 @@ function render() {
   }
   $('#quadro').style.setProperty('--dias', dias.length);
   $('#quadro').innerHTML = q;
-  $('#conferido').textContent = `Última conferência: ${E.conferido_em || '—'} · confere sozinho de hora em hora`;
+  $('#conferido').textContent = E.simulacao
+    ? `Dia simulado: ${E.simulacao.injetados} problemas novos sorteados, ${E.simulacao.pegos} pegos pelos agentes · conferido ${E.conferido_em}`
+    : `Última conferência: ${E.conferido_em || '—'} · confere sozinho de hora em hora`;
   renderDec(); renderCasos(); renderLotes(); renderConfia();
 }
 
@@ -238,4 +240,14 @@ $('#btnConferir').onclick = async () => {
 $('#btnResumo').onclick = async () => {
   const r = await fetch('/api/resumo/telegram', {method: 'POST'}); const j = await r.json();
   toast(r.ok ? 'Resumo enviado no Telegram.' : (j.detail || 'Não deu para enviar'));
+};
+
+$('#btnSimular').onclick = async () => {
+  const b = $('#btnSimular'); b.classList.add('loading'); b.textContent = 'Sorteando problemas novos…';
+  const r = await fetch('/api/simular', {method: 'POST'}); const j = await r.json();
+  b.classList.remove('loading'); b.textContent = 'Simular um dia novo';
+  if (!r.ok) return toast(j.detail || 'Não deu para simular');
+  $('#sala').removeAttribute('src');
+  toast(`Dia novo: ${j.injetados} problemas sorteados em outros fornecedores. Os agentes pegaram ${j.pegos}.`);
+  carregar();
 };

@@ -224,4 +224,4 @@ a.btn{text-decoration:none;display:inline-block}
 #gtip.on{opacity:1}
 @media(max-width:900px){.passos{grid-template-columns:1fr}.seta{display:none}.cons{grid-template-columns:1fr}}
 
-.flow .masc{width:72px;height:72px;border-radius:16px;background:#000;margin-bottom:6px}
+.flow .masc{width:44px;height:44px;object-fit:contain;margin-bottom:4px}

@@ -33,8 +33,15 @@ def _call(metodo: str, **params):
     tk = token()
     if not tk:
         raise RuntimeError("TELEGRAM_TOKEN não configurado")
-    r = requests.post(API.format(token=tk, metodo=metodo), json=params, timeout=20)
-    r.raise_for_status()
+    espera = int(params.get("timeout", 0)) + 15          # long polling: o HTTP espera mais que o Telegram
+    try:
+        r = requests.post(API.format(token=tk, metodo=metodo), json=params, timeout=espera)
+    except requests.RequestException as e:
+        raise ConnectionError(f"sem resposta do Telegram ({type(e).__name__})") from None   # nunca mostra a URL com o token
+    if r.status_code == 409:
+        raise ConnectionError("outro programa já está lendo este bot (feche o bot.py antigo; o servidor.py já liga o bot)")
+    if not r.ok:
+        raise ConnectionError(f"Telegram respondeu {r.status_code}: {r.json().get('description', '')}")
     return r.json()
 
 
