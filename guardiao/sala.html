@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b14; --panel:#0d1424; --panel2:#111a2e; --line:#1d2840; --line2:#26334f;
+  --txt:#e6ebf5; --mut:#8391ab; --dim:#5b6782;
+  --lime:#d4e000; --red:#ff5d5d; --amber:#ffb547; --blue:#5b8cff; --violet:#a58bff; --green:#39d98a;
+  --sent:#c9d2e3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;font-size:13px;overflow:hidden}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.app{height:100vh;width:100%;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;gap:10px;padding:12px}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
+.clock{font-size:20px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.clock small{display:block;font-size:10px;color:var(--mut);font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.chip{border:1px solid var(--line2);border-radius:999px;padding:5px 11px;color:var(--mut);white-space:nowrap}
+.chip b{color:var(--txt);font-weight:600}
+.chip.live{border-color:#3a4510;color:var(--lime);background:#141a05}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lime);margin-right:6px;box-shadow:0 0 0 0 #d4e00080;animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #d4e00066}70%{box-shadow:0 0 0 8px #d4e00000}100%{box-shadow:0 0 0 0 #d4e00000}}
+.lotes{display:flex;gap:3px;margin-left:auto;flex:1;min-width:80px;justify-content:flex-end}
+.lotes i{flex:1;max-width:16px;min-width:5px;height:6px;border-radius:3px;background:var(--line2);transition:.3s}
+.lotes i.on{background:var(--lime)} .lotes i.cur{background:var(--txt)}
+.ctl{display:flex;gap:6px}
+.btn{background:var(--panel2);border:1px solid var(--line2);color:var(--txt);border-radius:9px;padding:7px 11px;font:600 12px Inter;cursor:pointer}
+.btn:hover{border-color:var(--mut)} .btn.pri{background:var(--lime);color:#0b0f00;border-color:var(--lime)}
+.btn.sel{border-color:var(--lime);color:var(--lime)}
+
+/* main */
+.main{display:grid;grid-template-columns:240px minmax(0,1fr) 290px;gap:10px;min-height:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:0;display:flex;flex-direction:column}
+.h{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);font-weight:600;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+
+/* lote map */
+.lote-nome{font-weight:700;font-size:14px}
+.lote-meta{color:var(--mut);font-size:11.5px;margin:2px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;align-content:start}
+.grid span{aspect-ratio:1;border-radius:2px;background:var(--line);transition:background .25s,transform .25s}
+.grid span.ok{background:#1f5e40} .grid span.bad{background:var(--red);transform:scale(1.25);box-shadow:0 0 8px #ff5d5d99}
+.grid span.scan{background:var(--lime)}
+.leg{display:flex;gap:10px;color:var(--mut);font-size:11px;margin-top:10px}
+.leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.stat{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}
+.stat div{display:flex;justify-content:space-between;color:var(--mut);white-space:nowrap;gap:8px} .stat b{color:var(--txt)}
+
+/* agents */
+.room{position:relative;display:grid;grid-template-rows:auto 1fr;gap:34px;padding:6px}
+svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.wire{stroke:var(--line2);stroke-width:1.5;fill:none}
+.wire.go{stroke:var(--lime);stroke-width:2;stroke-dasharray:6 6;animation:dash .6s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-12}}
+.agents{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;z-index:1}
+.agent{position:relative;z-index:1;background:var(--panel2);border:1px solid var(--line2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:212px;transition:border-color .25s,box-shadow .25s}
+.agent.sent{width:min(560px,100%);margin:0 auto;min-height:0}
+.agent.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 10px 40px -12px var(--c)}
+.ahead{display:flex;align-items:center;gap:10px}
+.av{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#0a0d14;background:var(--c);font-size:14px}
+.an{font-weight:700;font-size:14px} .ar{color:var(--mut);font-size:11px}
+.st{margin-left:auto;font-size:10.5px;font-weight:600;border-radius:999px;padding:3px 8px;background:#1a2338;color:var(--mut)}
+.agent.on .st{background:var(--c);color:#0a0d14}
+.think{color:#c3cbe0;line-height:1.45;min-height:38px;font-size:12.5px}
+.think .cur{display:inline-block;width:6px;height:13px;background:var(--c);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.call{font-size:11.5px;background:#080d18;border:1px solid var(--line);border-radius:9px;padding:8px 9px;color:var(--mut);min-height:52px;word-break:break-word}
+.call .fn{color:var(--c);font-weight:600} .call .arg{color:var(--txt)}
+.call .tag{float:right;font-family:Inter;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px}
+.tag.auto{background:#13301f;color:var(--green)} .tag.aprovacao{background:#33270b;color:var(--amber)} .tag.humano{background:#33270b;color:var(--amber)}
+.ameta{display:flex;gap:12px;color:var(--dim);font-size:11px;margin-top:auto}
+.ameta b{color:var(--txt)}
+.case{border-left:3px solid var(--red);background:#1a0f14;border-radius:8px;padding:8px 10px;font-size:12px;display:none}
+.case.show{display:block;animation:in .35s}
+.case .ct{font-weight:700;color:#ffd0d0} .case .cv{color:var(--mut);margin-top:2px}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* human channel */
+.phone{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:8px;justify-content:flex-end}
+.bub{overflow-wrap:anywhere;background:var(--panel2);border:1px solid var(--line2);border-radius:12px 12px 12px 4px;padding:9px 10px;font-size:12px;animation:in .35s}
+.bub .who{font-size:10.5px;color:var(--amber);font-weight:700;margin-bottom:3px}
+.bub .what{color:var(--txt);font-weight:600;margin-bottom:3px}
+.bub .why{color:var(--mut);font-size:11.5px}
+.bub .bt{display:flex;gap:6px;margin-top:7px}
+.bub .bt span{flex:1;text-align:center;border:1px solid var(--line2);border-radius:7px;padding:4px;font-weight:600;font-size:11px}
+.bub .bt span:first-child{color:var(--green)} .bub .bt span:last-child{color:var(--red)}
+.empty{color:var(--dim);text-align:center;margin:auto 0;font-size:12px}
+
+/* bottom */
+.bottom{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.term{background:#05080f;border:1px solid var(--line);border-radius:14px;padding:10px 12px;height:150px;overflow:hidden;font-size:11.5px;line-height:1.6;display:flex;flex-direction:column;justify-content:flex-end}
+.term div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut);animation:in .25s}
+.term .ts{color:var(--dim)} .term .who{font-weight:600} .term .f{color:var(--txt)}
+.kpis{display:grid;grid-template-columns:repeat(2,160px);gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.kpi .l{font-size:10px;color:var(--mut);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.kpi .v{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:3px;font-variant-numeric:tabular-nums}
+.kpi.big .v{color:var(--lime)}
+.done{position:absolute;inset:0;display:none;place-items:center;background:#070b14e6;z-index:5;border-radius:14px}
+.done.show{display:grid;animation:in .4s}
+.done .box{text-align:center} .done h2{font-size:30px;letter-spacing:-.03em} .done p{color:var(--mut);margin-top:6px}
+.done .vs{display:flex;gap:28px;justify-content:center;margin-top:18px}
+.done .vs div b{display:block;font-size:26px} .done .vs .r b{color:var(--red)} .done .vs .g b{color:var(--lime)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="clock mono" id="clock">02/11 08:00<small>relógio do ambiente</small></div>
+    <span class="chip live"><span class="dot"></span>agentes em operação</span>
+    <span class="chip">lote <b id="tLote">—</b></span>
+    <span class="chip">fecha <b id="tFecha">—</b></span>
+    <div class="lotes" id="lotes"></div>
+    <div class="ctl">
+      <button class="btn pri" id="play">▶ Iniciar</button>
+      <button class="btn" data-s="1">1×</button><button class="btn sel" data-s="2">2×</button><button class="btn" data-s="5">5×</button>
+      <button class="btn" id="reset">↺</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <div class="h">Lote em conferência <span id="pct" class="mono">0%</span></div>
+      <div class="lote-nome mono" id="lNome">aguardando</div>
+      <div class="lote-meta" id="lMeta">Aperte Iniciar para a Sentinela abrir o primeiro lote.</div>
+      <div class="grid" id="grid"></div>
+      <div class="leg"><span><i style="background:#1f5e40"></i>ok</span><span><i style="background:var(--red)"></i>retido</span><span><i style="background:var(--line)"></i>na fila</span></div>
+      <div class="stat">
+        <div>conferidos <b class="mono" id="sConf">0</b></div>
+        <div>liberados <b class="mono" id="sOk">R$ 0</b></div>
+        <div>retidos <b class="mono" id="sRet">0</b></div>
+      </div>
+    </div>
+
+    <div class="card room" id="room">
+      <svg class="wires" id="wires"></svg>
+      <div class="agent sent" id="ag-Sentinela" style="--c:var(--sent)">
+        <div class="ahead"><div class="av">S</div><div><div class="an">Sentinela</div><div class="ar">orquestrador · abre lotes e despacha</div></div><span class="st">ocioso</span></div>
+        <div class="think"></div>
+      </div>
+      <div class="agents">
+        <div class="agent" id="ag-Analista" style="--c:var(--blue)">
+          <div class="ahead"><div class="av">A</div><div><div class="an">Analista CP</div><div class="ar">3 vias · duplicidade · alçada R$ 5 mil</div></div><span class="st">ocioso</span></div>
+          <div class="think"></div>
+          <div class="case"></div>
+          <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
+          <div class="ameta"><span>ações <b class="n">0</b></span><span>segurado <b class="r">R$ 0</b></span></div>
+        </div>
+        <div class="agent" id="ag-Auditor" style="--c:var(--red)">
+          <div class="ahead"><div class="av">Au</div><div><div class="an">Auditor</div><div class="ar">fraude · cadastro · causa raiz</div></div><span class="st">ocioso</span></div>
+          <div class="think"></div>
+          <div class="case"></div>
+          <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
+          <div class="ameta"><span>ações <b class="n">0</b></span><span>segurado <b class="r">R$ 0</b></span></div>
+        </div>
+        <div class="agent" id="ag-Leitor" style="--c:var(--violet)">
+          <div class="ahead"><div class="av">L</div><div><div class="an">Leitor da Caixa</div><div class="ar">e-mail e WhatsApp · IA</div></div><span class="st">ocioso</span></div>
+          <div class="think"></div>
+          <div class="case"></div>
+          <div class="call mono"><span style="color:var(--dim)">sem chamada ainda</span></div>
+          <div class="ameta"><span>ações <b class="n">0</b></span><span>mensagens <b>246</b></span></div>
+        </div>
+      </div>
+      <div class="done" id="done"><div class="box">
+        <h2>Lotes de 03 a 13/11 conferidos</h2>
+        <p id="dTxt"></p>
+        <div class="vs"><div class="r"><span>sem o agente</span><b id="dSem"></b></div><div class="g"><span>com o Guardião</span><b id="dCom"></b></div></div>
+      </div></div>
+    </div>
+
+    <div class="card">
+      <div class="h">Canal humano · Telegram <span id="hN" class="mono">0</span></div>
+      <div class="phone" id="phone"><div class="empty">Quando a decisão não cabe ao agente,<br>ele chama a pessoa certa aqui.</div></div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="term mono" id="term"></div>
+    <div class="kpis">
+      <div class="kpi big"><div class="l">Dinheiro segurado</div><div class="v mono" id="kR">R$ 0</div></div>
+      <div class="kpi"><div class="l">Ações autônomas</div><div class="v mono" id="kA">0</div></div>
+      <div class="kpi"><div class="l">Pedidos a humanos</div><div class="v mono" id="kH">0</div></div>
+      <div class="kpi"><div class="l">Títulos conferidos</div><div class="v mono" id="kT">0</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const D = __DATA__;
+const E = D.eventos;
+const COR = {Sentinela:'#c9d2e3', Analista:'#5b8cff', Auditor:'#ff5d5d', Leitor:'#a58bff', Humano:'#ffb547'};
+const brl = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const $ = id => document.getElementById(id);
+let i=0, speed=2, playing=false, timer=null;
+let S = {R:0, A:0, H:0, T:0, conf:0, ok:0, ret:0, lotesFeitos:0, contados:new Set(), agN:{}, agR:{}};
+
+// lote dots
+const nL = E.filter(e=>e.t==='lote_abre').length;
+$('lotes').innerHTML = Array.from({length:nL},()=>'<i></i>').join('');
+
+function wires(active){
+  const room=$('room').getBoundingClientRect(); const s=$('ag-Sentinela').getBoundingClientRect();
+  const x0=s.left+s.width/2-room.left, y0=s.bottom-room.top;
+  let h='';
+  ['Analista','Auditor','Leitor'].forEach(n=>{
+    const r=$('ag-'+n).getBoundingClientRect(); const x1=r.left+r.width/2-room.left, y1=r.top-room.top;
+    const on = active && active.includes(n);
+    h+=`<path class="wire ${on?'go':''}" d="M${x0},${y0} C${x0},${(y0+y1)/2} ${x1},${(y0+y1)/2} ${x1},${y1}"/>`;
+  });
+  if(active && active.includes('Analista') && active.includes('Auditor')){
+    const a=$('ag-Analista').getBoundingClientRect(), b=$('ag-Auditor').getBoundingClientRect(); const y=a.top+a.height*0.5-room.top;
+    h+=`<path class="wire go" d="M${a.right-room.left},${y} L${b.left-room.left},${y}"/>`;
+  }
+  $('wires').innerHTML=h;
+}
+window.addEventListener('resize',()=>wires());
+
+function setOn(name, status){
+  document.querySelectorAll('.agent').forEach(a=>{a.classList.remove('on'); a.querySelector('.st').textContent=a.dataset.st||'ocioso';});
+  const a=$('ag-'+name); if(!a) return; a.classList.add('on'); a.querySelector('.st').textContent=status;
+}
+function type(el, txt, ms){
+  el.innerHTML=''; const n=txt.length; let k=0; const step=Math.max(1,Math.ceil(n/(ms/18)));
+  const t=setInterval(()=>{k+=step; el.innerHTML=escape(txt.slice(0,k))+'<span class="cur"></span>'; if(k>=n){clearInterval(t);} },18);
+}
+function escape(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function log(who, fn, txt){
+  const d=document.createElement('div');
+  d.innerHTML=`<span class="ts">${$('clock').firstChild.textContent}</span>  <span class="who" style="color:${COR[who]||'#fff'}">${who.padEnd(9,' ')}</span> <span class="f">${escape(fn)}</span>  ${escape(txt)}`;
+  $('term').appendChild(d); while($('term').children.length>9) $('term').firstChild.remove();
+}
+function kpis(){ $('kR').textContent=brl(S.R); $('kA').textContent=S.A; $('kH').textContent=S.H; $('kT').textContent=S.T;
+  $('sConf').textContent=S.conf; $('sOk').textContent=brl(S.ok); $('sRet').textContent=S.ret; }
+let clk = new Date(2026,10,2,8,0);
+function tick(min){ clk=new Date(clk.getTime()+min*60000);
+  const p=n=>String(n).padStart(2,'0'); $('clock').firstChild.textContent=`${p(clk.getDate())}/${p(clk.getMonth()+1)} ${p(clk.getHours())}:${p(clk.getMinutes())}`;}
+
+let loteAtual=null;
+function run(e){
+  const dur = {lote_abre:900, pensa:1500, confere:1800, achado:1900, tool:850, humano:1100, handoff:600, lote_fecha:900}[e.t]||700;
+  const fast = e.rapido ? 0.35 : 1;
+  if(e.t==='lote_abre'){
+    loteAtual=e; $('tLote').textContent=e.lote; $('tFecha').textContent=e.fechamento+' · '+e.banco.replace('Banco ','');
+    $('lNome').textContent=e.lote; $('lMeta').textContent=`${e.banco} · fecha ${e.fechamento} · ${e.n} títulos · ${brl(e.valor)}`;
+    $('grid').innerHTML=e.titulos.map(t=>`<span title="${t}${e.flag[t]?' — '+e.flag[t]:''}" data-t="${t}"></span>`).join('');
+    $('pct').textContent='0%';
+    const dots=$('lotes').children; for(let k=0;k<dots.length;k++){dots[k].className = k<S.lotesFeitos?'on':(k===S.lotesFeitos?'cur':'');}
+    setOn('Sentinela','abrindo lote'); wires(); tick(3);
+    log('Sentinela','listar_agenda_remessa',`${e.lote} · ${e.n} títulos · ${brl(e.valor)}`);
+  }
+  else if(e.t==='pensa'){
+    setOn(e.agente, 'raciocinando'); type($('ag-'+e.agente).querySelector('.think'), e.texto, dur*0.8/speed);
+    if(e.agente!=='Sentinela') wires([e.agente]); tick(1);
+  }
+  else if(e.t==='confere'){
+    setOn('Analista','conferindo'); wires(['Analista','Auditor']);
+    type($('ag-Analista').querySelector('.think'), e.texto, dur*0.5/speed);
+    const cells=[...$('grid').children]; const tot=cells.length; let k=0;
+    const step=Math.max(1,Math.ceil(tot/((dur/speed)/30)));
+    const t=setInterval(()=>{ for(let j=0;j<step&&k<tot;j++,k++){ const c=cells[k]; const f=loteAtual.flag[c.dataset.t]; c.className = f?'scan':'ok'; }
+      $('pct').textContent=Math.round(100*k/tot)+'%'; if(k>=tot) clearInterval(t); },30);
+    S.conf+=e.n; S.T+=e.n; tick(6);
+  }
+  else if(e.t==='achado'){
+    const a=$('ag-'+e.agente); setOn(e.agente,'achou problema'); wires([e.agente]);
+    type(a.querySelector('.think'), e.texto, dur*0.7/speed);
+    const cs=a.querySelector('.case'); cs.innerHTML=`<div class="ct">${escape(e.caso.tipo)} · ${escape(e.caso.titulo)}</div><div class="cv">${escape(e.caso.fornecedor)} · ${brl(e.caso.valor)}${e.caso.perda?` · <b style="color:#ff9b9b">${brl(e.caso.perda)} em risco</b>`:''}</div>`;
+    cs.classList.remove('show'); void cs.offsetWidth; cs.classList.add('show');
+    const cell=$('grid').querySelector(`[data-t="${e.caso.titulo}"]`); if(cell) cell.className='bad';
+    if(!S.contados.has(e.caso.id)){ S.contados.add(e.caso.id); S.R+=e.caso.perda; S.ret++; S.agR[e.agente]=(S.agR[e.agente]||0)+e.caso.perda;
+      a.querySelector('.r') && (a.querySelector('.r').textContent=brl(S.agR[e.agente])); }
+    log(e.agente,'achado',e.texto); tick(2);
+  }
+  else if(e.t==='tool'){
+    const a=$('ag-'+e.agente); if(!a) return dur;
+    setOn(e.agente, e.modo==='auto'?'executando':'pedindo aprovação'); wires([e.agente]);
+    a.querySelector('.call').innerHTML=`<span class="tag ${e.modo}">${e.modo==='auto'?'AGIU SOZINHO':'CHAMOU HUMANO'}</span><span class="fn">${escape(e.ferramenta)}</span>(<span class="arg">${escape(e.alvo)}</span>)<br>${escape(e.detalhe)}`;
+    if(e.modo==='auto'){S.A++; S.agN[e.agente]=(S.agN[e.agente]||0)+1; a.querySelector('.n').textContent=S.agN[e.agente];}
+    if(e.caso){ const cs=a.querySelector('.case'); if(cs){ cs.innerHTML=`<div class="ct">${escape(e.caso.tipo)} · ${escape(e.caso.titulo)}</div><div class="cv">${escape(e.caso.fornecedor)} · ${brl(e.caso.valor)}${e.caso.perda?` · <b style="color:#ff9b9b">${brl(e.caso.perda)} em risco</b>`:''}</div>`; cs.classList.add('show'); } }
+    if(e.caso && !S.contados.has(e.caso.id)){ S.contados.add(e.caso.id); S.R+=e.caso.perda; S.ret++; S.agR[e.agente]=(S.agR[e.agente]||0)+e.caso.perda;
+      a.querySelector('.r') && (a.querySelector('.r').textContent=brl(S.agR[e.agente]));
+      const cell=$('grid').querySelector(`[data-t="${e.caso.titulo}"]`); if(cell) cell.className='bad'; }
+    log(e.agente, e.ferramenta, `${e.alvo} — ${e.detalhe}`); tick(1);
+  }
+  else if(e.t==='humano'){
+    S.H++; $('hN').textContent=S.H;
+    const ph=$('phone'); const em=ph.querySelector('.empty'); if(em) em.remove();
+    const b=document.createElement('div'); b.className='bub';
+    const ap = e.ferramenta==='solicitar_aprovacao';
+    b.innerHTML=`<div class="who">${ap?'🖐️ Aprovação':'🔔 Acionamento'} → ${escape(e.para)}</div>
+      <div class="what">${escape(e.caso.resumo)}</div>
+      <div class="why">${escape(e.caso.titulo)} · ${brl(e.caso.valor)} · ${escape(e.texto)}</div>
+      ${ap?'<div class="bt"><span>✅ Aprovar</span><span>❌ Recusar</span></div>':''}`;
+    ph.appendChild(b); while(ph.children.length>4) ph.firstChild.remove();
+    $('ag-'+e.agente) && setOn(e.agente,'aguardando humano');
+    log('Humano', e.ferramenta, `${e.para}: ${e.caso.resumo}`);
+  }
+  else if(e.t==='handoff'){ setOn(e.para,'recebeu caso'); wires([e.de,e.para]); log(e.de,'→ '+e.para, e.texto); }
+  else if(e.t==='lote_fecha'){
+    S.ok+=e.ok_valor; S.lotesFeitos++; setOn('Sentinela','liberando lote'); wires();
+    type($('ag-Sentinela').querySelector('.think'), `${e.lote} conferido: ${e.ok} títulos seguem para o banco (${brl(e.ok_valor)}), ${e.retidos} retidos${e.perda?` — ${brl(e.perda)} que sairiam indevidamente`:''}.`, dur*0.6/speed);
+    log('Sentinela','liberar_lote',`${e.lote}: ${e.ok} ok · ${e.retidos} retidos`);
+    const dots=$('lotes').children; if(dots[S.lotesFeitos-1]) dots[S.lotesFeitos-1].className='on';
+  }
+  kpis();
+  return dur*fast;
+}
+function next(){
+  if(!playing) return;
+  if(i>=E.length){ finish(); return; }
+  const d=run(E[i++]); timer=setTimeout(next, d/speed);
+}
+function finish(){
+  playing=false; $('play').textContent='▶ Iniciar'; setOn('Sentinela','concluído'); wires();
+  const p=D.placar; $('dSem').textContent='−'+brl(p.perda_sem_agente); $('dCom').textContent='−'+brl(p.custo_agente);
+  $('dTxt').textContent=`${p.titulos_conferidos} títulos · ${p.casos} casos · ${p.acoes_executadas} ações sozinho · ${p.aprovacoes_pedidas+p.acionamentos} chamadas a humanos`;
+  $('done').classList.add('show'); S.A=p.acoes_executadas; kpis();
+}
+$('play').onclick=()=>{ if(i>=E.length) reset(); playing=!playing; $('play').textContent=playing?'❚❚ Pausar':'▶ Continuar'; if(playing) next(); else clearTimeout(timer); };
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{speed=+b.dataset.s; document.querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('sel',x===b));});
+function reset(){ clearTimeout(timer); playing=false; i=0; S={R:0,A:0,H:0,T:0,conf:0,ok:0,ret:0,lotesFeitos:0,contados:new Set(),agN:{},agR:{}};
+  clk=new Date(2026,10,2,8,0); tick(0); $('term').innerHTML=''; $('phone').innerHTML='<div class="empty">Quando a decisão não cabe ao agente,<br>ele chama a pessoa certa aqui.</div>';
+  $('grid').innerHTML=''; $('done').classList.remove('show'); $('hN').textContent='0'; $('play').textContent='▶ Iniciar';
+  document.querySelectorAll('.agent').forEach(a=>{a.querySelector('.think').innerHTML=''; const c=a.querySelector('.call'); if(c) c.innerHTML='<span style="color:var(--dim)">sem chamada ainda</span>'; const n=a.querySelector('.n'); if(n) n.textContent='0'; const r=a.querySelector('.r'); if(r) r.textContent='R$ 0'; const cs=a.querySelector('.case'); if(cs) cs.classList.remove('show');});
+  [...$('lotes').children].forEach(d=>d.className=''); kpis(); setOn('none'); wires(); }
+$('reset').onclick=reset;
+setTimeout(()=>wires(),300);
+if (D.autoplay) { setTimeout(()=>$('play').click(), 600); }
+</script>
+</body>
+</html>
