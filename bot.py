@@ -6,7 +6,8 @@ Comandos:
   /start        registra o chat e mostra o resumo
   /status       placar em R$ e o que está pendente
   /lote         próximos lotes e o que o agente segurou em cada um
-  /pendentes    reenvia os pedidos de aprovação
+  /pendentes    pedidos de aprovação (card em imagem + botões)
+  /avisos       pessoas acionadas pelo agente (card em imagem)
   /titulo TP…   situação de um título (ou só mande o número TP… no texto)
 Botões ✅/❌ aplicam a decisão e o agente executa o resto.
 """
@@ -62,7 +63,7 @@ def resumos_ia(casos, chat):
     """Em paralelo ao bot: a IA escreve o resumo de cada caso para quem aprova."""
     for c in casos:
         try:
-            tg.enviar(f"🧠 <b>Resumo do agente · {c.id}</b>\n{leitor_caixa.explicar_caso(asdict(c))}", chat)
+            tg.enviar(f"🧠 <b>Em poucas palavras · {c.id}</b>\n{leitor_caixa.explicar_caso(asdict(c))}", chat)
         except Exception as e:
             print("IA indisponível:", e)
 
@@ -75,7 +76,7 @@ def main():
         try:
             res = tg._call("getUpdates", timeout=25, offset=offset).get("result", [])
         except Exception as e:
-            print("erro:", e)
+            print("Sem conexão com o Telegram agora; tentando de novo...", type(e).__name__)
             time.sleep(3)
             continue
         for u in res:
@@ -84,7 +85,7 @@ def main():
                 cq = u["callback_query"]
                 acao, cid = cq["data"].split(":", 1)
                 quem = cq["from"].get("first_name", "?")
-                c = g.decidir(cid, acao == "ap", quem)
+                c = g.decidir(cid, acao == "ap", f"{quem} (Telegram)")
                 resp = {"callback_id": cq["id"], "chat": cq["message"]["chat"]["id"], "message_id": cq["message"]["message_id"]}
                 txt = (f"{'✅ Aprovado' if acao == 'ap' else '❌ Recusado'} por {quem}: {c.resumo}\n"
                        f"Agente executou: " + ", ".join(a["ferramenta"] for a in c.acoes[-3:])) if c else "Caso não encontrado."
@@ -106,15 +107,21 @@ def main():
             elif texto.startswith("/pendentes"):
                 pend = [c for c in g.casos if c.status == "aguardando_aprovacao"]
                 for c in pend[:10]:
-                    tg.pedir_aprovacao(asdict(c), chat)     # chega na hora; o resumo da IA vem logo depois
+                    tg.enviar_card(asdict(c), chat)          # card em imagem + botões, chega na hora
                 if pend and ia.disponivel():
                     threading.Thread(target=resumos_ia, args=(pend[:10], chat), daemon=True).start()
                 if not pend:
                     tg.enviar("Nada pendente. 🎉", chat)
+            elif texto.startswith("/avisos"):
+                for c in g.casos:
+                    for x in c.acoes:
+                        if x["ferramenta"] == "acionar_pessoa":
+                            tg.enviar_card(asdict(c), chat, "aviso", x["para"], x["detalhe"])
+                            break
             elif tid:
                 tg.enviar(titulo(tid.group(0)), chat)
             else:
-                tg.enviar("Posso: /status · /lote · /pendentes · ou mande um número de título (TP…).", chat)
+                tg.enviar("Posso: /status · /lote · /pendentes · /avisos · ou mande um número de título (TP…).", chat)
 
 
 if __name__ == "__main__":

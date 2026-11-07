@@ -31,10 +31,22 @@ O **Auditor** também procura a causa raiz. Exemplo: 8 títulos com vírgula des
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env         # coloque AI_PROXY_API_KEY e TELEGRAM_TOKEN
-streamlit run app.py         # painel com o fluxo ao vivo, os casos, as aprovações e o placar
-python bot.py                # bot do Telegram: /status /lote /pendentes /titulo TP…
+cp .env.example .env         # AI_PROXY_API_KEY e TELEGRAM_TOKEN (opcionais)
+python servidor.py           # app em http://localhost:8000 + bot do Telegram no mesmo processo
+python validar.py            # prova de que está certo (base limpa, problemas novos, IDs embaralhados, trava da IA)
+python teste_ia.py           # 1 chamada ao Jev + 1 ao chat, com custo
 ```
+
+O que você aprova no Telegram aparece no app na hora, e vice-versa. No Telegram: `/status`, `/lote`, `/pendentes` (cards em imagem com Aprovar/Recusar), `/avisos` ou um número de título.
+
+## Como sabemos que está certo (`validar.py`)
+
+1. **Base limpa**: corrige cada problema e roda de novo → 0 alertas em 860 títulos (zero falso positivo).
+2. **Problemas novos**: em 10 sorteios, injeta 7 tipos de problema em fornecedores e valores diferentes dos originais → 203/203 achados com o tipo certo, nenhum alerta a mais.
+3. **Dados embaralhados**: todos os IDs trocados e linhas embaralhadas → resultado idêntico.
+4. **IA não inventa**: todo texto da IA é conferido contra as evidências; valor ou título que não existe faz o texto ser descartado. A IA nunca decide pagamento.
+
+A validação encontrou 2 bugs reais que foram corrigidos: fornecedor com duas trocas de conta (a fraudulenta passava) e título no fornecedor errado pago por boleto (classificado com o tipo errado).
 
 Os dados ficam em `data/` (bases fictícias da organização, desafio Pagamentos). Com dados reais, os mesmos cruzamentos rodariam sobre as exportações do ERP, o DDA e os extratos CNAB/OFX, a cada hora.
 

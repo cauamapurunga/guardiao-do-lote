@@ -104,3 +104,23 @@ def confirmar_clique(resp: dict, texto: str):
         enviar(texto, str(resp["chat"]))
     except Exception:
         pass
+
+
+def enviar_card(caso: dict, chat: str | None = None, modo: str = "aprovacao", para: str = "", motivo: str = "",
+                legenda: str | None = None):
+    """Manda o caso como imagem (card com a marca) + botões, quando for aprovação."""
+    from . import cartao
+    from . import linguagem as L
+    png = cartao.gerar(caso, modo, para, motivo)
+    t = L.tipo(caso["tipo"])
+    cap = legenda or f"<b>{t['titulo']}</b> · {brl2(caso['valor'])} · {caso['fornecedor']}"
+    data = {"chat_id": chat or chat_id(), "caption": cap[:1024], "parse_mode": "HTML"}
+    if modo == "aprovacao":
+        data["reply_markup"] = json.dumps({"inline_keyboard": [[
+            {"text": "✅ Aprovar", "callback_data": f"ap:{caso['id']}"},
+            {"text": "❌ Recusar", "callback_data": f"rc:{caso['id']}"}]]})
+    tk = token()
+    r = requests.post(API.format(token=tk, metodo="sendPhoto"), data=data,
+                      files={"photo": (f"{caso['id']}.png", png, "image/png")}, timeout=30)
+    r.raise_for_status()
+    return r.json()

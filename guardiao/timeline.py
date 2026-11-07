@@ -5,6 +5,7 @@ from collections import defaultdict
 from dataclasses import asdict
 
 from .agentes import Guardiao
+from . import linguagem as L
 
 
 def rs(v: float) -> str:
@@ -18,7 +19,7 @@ NOMES = {"GOLPE_TROCA_CONTA": "Golpe: conta trocada", "JA_PAGO_FORA_DO_LOTE": "J
 
 def _caso_min(c) -> dict:
     return {"id": c.id, "titulo": c.titulo_id, "fornecedor": c.fornecedor, "valor": round(c.valor, 2),
-            "perda": round(c.perda_evitada, 2), "tipo": NOMES.get(c.tipo, c.tipo), "resumo": c.resumo,
+            "perda": round(c.perda_evitada, 2), "tipo": L.tipo(c.tipo)["titulo"], "resumo": c.resumo,
             "evidencias": c.evidencias[:4], "status": c.status}
 
 
@@ -70,7 +71,7 @@ def construir(g: Guardiao) -> dict:
                 continue
             golpe_tratado.add(c.fornecedor_id) if c.tipo == "GOLPE_TROCA_CONTA" else None
             eventos.append({"t": "achado", "agente": detector, "caso": _caso_min(c),
-                            "texto": f"{c.titulo_id}: {c.resumo}. " + " · ".join(c.evidencias[:2])})
+                            "texto": f"{c.titulo_id} · {L.tipo(c.tipo)['frase']} Prova: {c.evidencias[0]}."})
             atual = detector
             for a in acs:
                 quem = a.agente.split(" ")[0]

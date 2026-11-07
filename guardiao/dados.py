@@ -56,6 +56,7 @@ class Bases:
     extrato_lit: pd.DataFrame
     politicas: pd.DataFrame
     ferramentas: pd.DataFrame
+    retorno: pd.DataFrame
     ref: pd.Timestamp = REF
 
 
@@ -82,6 +83,8 @@ def carregar(data_dir: Path | None = None) -> Bases:
     lit = pd.read_csv(DATA_DIR / "extrato_banco_litoral.csv", sep=";", decimal=",", thousands=".")
     pol = _csv("politicas")
     fer = _csv("ferramentas")
+    ret = _csv("retorno_remessa", dtype={"titulo_id": str})
+    ret["data_pagamento"] = pd.to_datetime(ret.data_pagamento)
 
     forn["raiz"] = forn.cnpj.map(raiz)
     forn["dominio"] = forn.email_cadastrado.map(dominio)
@@ -100,4 +103,9 @@ def carregar(data_dir: Path | None = None) -> Bases:
     dup["vencimento"] = pd.to_datetime(dup.vencimento)
     lit["Data"] = pd.to_datetime(lit["Data"], format="%d/%m/%Y")
     mer["data"] = pd.to_datetime(mer["data"])
-    return Bases(ag, tit, forn, alt, nfs, dup, ocs, dda, usu, com, ctr, mer, lit, pol, fer)
+    # data de referência vem das políticas (não é fixa no código)
+    ref = REF
+    r = pol[(pol.secao == "data_referencia")]
+    if len(r):
+        ref = pd.Timestamp(r.valor.iloc[0])
+    return Bases(ag, tit, forn, alt, nfs, dup, ocs, dda, usu, com, ctr, mer, lit, pol, fer, ret, ref)

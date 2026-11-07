@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guardião do Lote · Gocase</title>
+<link rel="icon" href="/assets/gocase-preto.png">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="top"><div class="in">
+  <a class="brand" href="#"><img src="/assets/gocase-preto.png" alt="Gocase"><span>Guardião do Lote</span></a>
+  <nav id="nav">
+    <button data-v="hoje" class="on">Hoje</button>
+    <button data-v="agentes">Agentes ao vivo</button>
+    <button data-v="decisoes">Decisões <span class="badge" id="nPend">0</span></button>
+    <button data-v="casos">Casos</button>
+    <button data-v="lotes">Lotes</button>
+    <button data-v="caixa">E-mails</button>
+    <button data-v="confia">Confiabilidade</button>
+    <button data-v="como">Como funciona</button>
+  </nav>
+  <div class="status"><span><i id="sTg"></i>Telegram</span><span><i id="sIa"></i>IA</span></div>
+</div></header>
+
+<main>
+<!-- HOJE -->
+<section class="view on" id="v-hoje">
+  <div class="hero">
+    <div class="hero-l">
+      <p class="eyebrow" id="hEyebrow">Contas a pagar · lotes de 03 a 13/11</p>
+      <h1 id="hTitulo">—</h1>
+      <p class="lead" id="hLead">—</p>
+      <div class="acts">
+        <button class="btn pri" data-go="decisoes">Ver o que precisa de você</button>
+        <button class="btn" data-go="agentes">Ver os agentes trabalhando</button>
+      </div>
+    </div>
+    <div class="card vs">
+      <p class="eyebrow">Quanto a empresa perderia nesses lotes</p>
+      <div class="row"><span>Hoje, o lote sai sem conferência</span><span class="big r num" id="vSem">—</span></div>
+      <hr>
+      <div class="row"><span>Com o Guardião</span><span class="big g num" id="vCom">—</span></div>
+      <small id="vExp">—</small>
+    </div>
+  </div>
+  <div class="sec kpis">
+    <div class="card kpi"><b class="num" id="kTit">—</b><span>títulos conferidos, um por um</span></div>
+    <div class="card kpi"><b class="num" id="kSoz">—</b><span>problemas resolvidos sozinho</span></div>
+    <div class="card kpi"><b class="num" id="kVoce">—</b><span>esperando uma decisão de pessoa</span></div>
+    <div class="card kpi"><b class="num" id="kAcoes">—</b><span>ações feitas nos sistemas</span></div>
+  </div>
+  <div class="sec">
+    <div class="sec-h"><h2>O que ele encontrou</h2><span class="mut">valor que sairia errado, por tipo</span></div>
+    <div class="card bars" id="bars"></div>
+  </div>
+  <div class="sec">
+    <div class="sec-h"><h2>Lotes da semana</h2><span class="mut">vermelho = dinheiro que o agente segurou</span></div>
+    <div class="strip" id="strip"></div>
+  </div>
+</section>
+
+<!-- AGENTES -->
+<section class="view" id="v-agentes">
+  <div class="sec-h" style="margin-bottom:18px"><div><p class="eyebrow">Agentes ao vivo</p><h2>Veja cada agente conferindo, decidindo e chamando gente</h2></div>
+  <span class="mut">aperte Iniciar na tela abaixo</span></div>
+  <iframe class="sala" id="sala" title="Sala dos agentes"></iframe>
+</section>
+
+<!-- DECISÕES -->
+<section class="view" id="v-decisoes">
+  <div class="sec-h"><div><p class="eyebrow">Decisões</p><h2 id="dTitulo">—</h2>
+  <p class="mut" style="margin-top:4px">O agente já segurou o dinheiro. Aqui só fica o que, pela política, uma pessoa precisa decidir.</p></div>
+  <button class="btn pri" id="btnTg">Enviar para o Telegram</button></div>
+  <div class="dec">
+    <div class="list" id="listaDec"></div>
+    <div class="card preview">
+      <div class="phone-h"><h3>Como chega no Telegram</h3><span class="mut" id="pvId"></span></div>
+      <img id="pvImg" alt="Card do caso como chega no Telegram">
+    </div>
+  </div>
+</section>
+
+<!-- CASOS -->
+<section class="view" id="v-casos">
+  <div class="sec-h"><div><p class="eyebrow">Casos</p><h2>Tudo o que o agente encontrou</h2></div><span class="mut" id="cConta"></span></div>
+  <div class="filters" id="filtros"></div>
+  <div class="card"><table><thead><tr><th>Problema</th><th>Fornecedor</th><th>Lote</th><th class="r">Valor</th><th>Situação</th></tr></thead><tbody id="tCasos"></tbody></table></div>
+</section>
+
+<!-- LOTES -->
+<section class="view" id="v-lotes">
+  <div class="sec-h"><div><p class="eyebrow">Lotes</p><h2>O que sai do banco em cada lote</h2></div></div>
+  <div class="card"><table><thead><tr><th>Lote</th><th>Banco</th><th>Sai em</th><th class="r">Títulos</th><th class="r">Valor</th><th class="r">Retidos</th><th class="r">Dinheiro segurado</th></tr></thead><tbody id="tLotes"></tbody></table></div>
+</section>
+
+<!-- CAIXA -->
+<section class="view" id="v-caixa">
+  <div class="sec-h"><div><p class="eyebrow">Caixa de e-mail e WhatsApp</p><h2>O que os fornecedores pediram</h2>
+  <p class="mut" style="margin-top:4px">O Leitor classifica cada mensagem e confere quem mandou contra o cadastro. Texto de fora é tratado como dado, nunca como ordem.</p></div>
+  <button class="btn pri" id="btnCaixa">Classificar com IA (Jev)</button></div>
+  <div class="card"><table><thead><tr><th>Quando</th><th>De</th><th>Assunto</th><th>Pedido</th><th>Risco</th><th>O que o agente faz</th></tr></thead><tbody id="tCaixa"></tbody></table></div>
+</section>
+
+<!-- CONFIABILIDADE -->
+<section class="view" id="v-confia">
+  <div class="sec-h"><div><p class="eyebrow">Confiabilidade</p><h2>Como sabemos que está certo</h2>
+  <p class="mut" style="margin-top:4px">Resultado do <code>py validar.py</code>, que qualquer pessoa pode rodar de novo.</p></div><span class="mut" id="cfQuando"></span></div>
+  <div class="proof" id="proof"></div>
+  <div class="sec two">
+    <div><h3 style="margin-bottom:10px">Todas as checagens</h3><div class="card checks" id="checks"></div></div>
+    <div><h3 style="margin-bottom:10px">10 sorteios com problemas novos</h3>
+      <div class="card"><table><thead><tr><th>Sorteio</th><th class="r">Injetados</th><th class="r">Achados</th><th class="r">Perdidos</th><th class="r">A mais</th></tr></thead><tbody id="tSort"></tbody></table></div>
+      <p class="mut" style="margin-top:12px;font-size:13px">Em cada sorteio, 7 tipos de problema são colocados em fornecedores, valores e títulos diferentes dos originais (inclusive golpe confirmado por um telefone recém-trocado). O motor não conhece esses casos antes.</p>
+    </div>
+  </div>
+  <div class="sec card" style="padding:22px">
+    <h3>E a IA?</h3>
+    <p class="mut" style="margin-top:6px">A IA lê e-mails (Jev) e escreve resumos (chat). <b style="color:var(--ink)">Ela nunca decide pagamento</b>: quem retira, cancela e bloqueia são as regras das políticas. Todo texto da IA é conferido: se citar valor, título ou data que não está nas evidências, é descartado e vai um texto padrão. Classificação com confiança abaixo de 0,7 vai para uma pessoa.</p>
+    <p class="mut" style="margin-top:10px;font-size:13px" id="iaUso"></p>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="view" id="v-como">
+  <div class="sec-h"><div><p class="eyebrow">Como funciona</p><h2>Um time que trabalha como colega da área</h2></div></div>
+  <div class="flow">
+    <div class="card" style="--c:#111"><h3>Sentinela</h3><p class="mut">Acompanha a agenda e abre cada lote antes de ele ir ao banco (10h e 14h).</p><div><code>listar_agenda_remessa</code></div></div>
+    <div class="card" style="--c:#3060d0"><h3>Analista</h3><p class="mut">Confere pedido de compra, nota, parcela, boleto e extrato. Corrige até R$ 5 mil.</p><div><code>retirar_do_lote</code><code>cancelar_titulo</code><code>corrigir_lancamento</code></div></div>
+    <div class="card" style="--c:#d93a3a"><h3>Auditor</h3><p class="mut">Pega fraude no cadastro e no boleto. Procura a causa dos erros.</p><div><code>bloquear_fornecedor</code><code>abrir_incidente</code></div></div>
+    <div class="card" style="--c:#7a5ad6"><h3>Leitor da caixa</h3><p class="mut">Lê e-mails e WhatsApps dos fornecedores com IA e avisa o Auditor.</p><div><code>listar_comunicacoes</code></div></div>
+    <div class="card" style="--c:#b07a00"><h3>Pessoas</h3><p class="mut">Recebem no Telegram só o que é delas, com as evidências, e decidem com um toque.</p><div><code>solicitar_aprovacao</code><code>acionar_pessoa</code></div></div>
+  </div>
+  <div class="sec rules">
+    <div class="card"><h3>O agente faz sozinho</h3><ul><li>Tira do lote qualquer título suspeito</li><li>Cancela a cópia de uma nota lançada duas vezes (até R$ 5 mil)</li><li>Corrige o valor pela nota fiscal (até R$ 5 mil)</li><li>Bloqueia o fornecedor com conta suspeita</li><li>Abre incidente e propõe correção de processo</li></ul></div>
+    <div class="card"><h3>O agente chama alguém</h3><ul><li>Troca de dado bancário: aprovação dupla (Renata + aprovador)</li><li>Acima de R$ 50 mil: diretora financeira</li><li>Golpe: jurídico</li><li>Pagamento feito por fora: tesoureiro</li><li>Compra cancelada: comprador</li></ul></div>
+  </div>
+  <p class="mut sec" style="margin-top:28px">As regras vêm de <code>politicas.csv</code> e <code>ferramentas.csv</code>. Mudou a política, muda o agente — sem mexer no código.</p>
+</section>
+</main>
+
+<div class="shade" id="shade"></div>
+<aside class="drawer" id="drawer"><div class="in" id="dIn"></div></aside>
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

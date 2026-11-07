@@ -66,7 +66,9 @@ def troca_bancaria_suspeita(b: Bases, A: pd.DataFrame) -> list[Achado]:
     tel_trocado = al[(al.campo == "telefone") & (al.data_hora >= b.ref - pd.Timedelta(days=JANELA_TROCA_BANCARIA_DIAS))]
     dominios_oficiais = set(b.fornecedores.dominio) - {""}
     out = []
-    for forn, g in recentes.groupby("fornecedor_id"):
+    suspeitos: dict[str, tuple] = {}
+    # cada troca (fornecedor + momento) é avaliada sozinha: um fornecedor pode ter uma troca legítima e outra fraudulenta
+    for (forn, _), g in recentes.sort_values("data_hora").groupby(["fornecedor_id", "data_hora"]):
         motivos = []
         conf = g.confirmacao_registrada.iloc[0]
         como = str(g.confirmacao_como.iloc[0]) if pd.notna(g.confirmacao_como.iloc[0]) else ""
@@ -89,8 +91,9 @@ def troca_bancaria_suspeita(b: Bases, A: pd.DataFrame) -> list[Achado]:
             d = m.dominio
             if d and d not in dominios_oficiais and f.dominio and 0 < _lev(d, f.dominio) <= 2:
                 motivos.append(f"pedido veio de '{m.remetente}' — domínio parecido com o oficial '{f.dominio}' ({m.comunicacao_id})")
-        if not motivos:
-            continue
+        if motivos:
+            suspeitos[forn] = (g, motivos, quando)   # a troca suspeita mais recente manda
+    for forn, (g, motivos, quando) in suspeitos.items():
         alt_ids = ", ".join(g.alteracao_id)
         antes = "/".join(g.sort_values("campo").valor_anterior.astype(str))
         depois = "/".join(g.sort_values("campo").valor_novo.astype(str))
@@ -109,8 +112,7 @@ def troca_bancaria_suspeita(b: Bases, A: pd.DataFrame) -> list[Achado]:
 
 # ---------------------------------------------------------------- 2. já pago fora do lote
 def ja_pago_fora_do_lote(b: Bases, A: pd.DataFrame) -> list[Achado]:
-    ret = pd.read_csv(b_path(b, "retorno_remessa"))
-    ret["data_pagamento"] = pd.to_datetime(ret.data_pagamento)
+    ret = b.retorno
     pagos_ok = ret[ret.codigo_ocorrencia.astype(str).str.zfill(2) == "00"]
     mer = b.extrato_mer[b.extrato_mer.tipo == "PAGTO AVULSO"].assign(v=lambda d: -d.valor, txt=lambda d: d.descricao, banco="Banco Meridiano")
     lit = b.extrato_lit[(b.extrato_lit["Valor (R$)"] < 0) & ~b.extrato_lit["Histórico"].str.startswith("TAR")]
@@ -189,7 +191,9 @@ def tres_vias(b: Bases, A: pd.DataFrame) -> list[Achado]:
             continue
         nf = nfs[(nfs.raiz == r.raiz) & (nfs.nf_norm == r.nf_norm)]
         if nf.empty:
-            outra = nfs[(nfs.nf_norm == r.nf_norm) & (abs(nfs.valor_total - r.valor) < 1)]
+            mesma_nf = nfs[nfs.nf_norm == r.nf_norm]
+            parc = dup[dup.chave_acesso.isin(mesma_nf.chave_acesso) & (abs(dup.valor - r.valor) < 1)]
+            outra = mesma_nf[(abs(mesma_nf.valor_total - r.valor) < 1) | mesma_nf.chave_acesso.isin(parc.chave_acesso)]
             if len(outra):
                 o = outra.iloc[0]
                 certo = forn_por_raiz.loc[o.raiz] if o.raiz in forn_por_raiz.index else None
@@ -249,7 +253,10 @@ def boleto(b: Bases, A: pd.DataFrame) -> list[Achado]:
     for _, r in A[A.forma_pagamento == "boleto"].iterrows():
         ld = so_digitos(r.linha_digitavel)
         ev = []
-        if r.cnpj_beneficiario_boleto and raiz(r.cnpj_beneficiario_boleto) and raiz(r.cnpj_beneficiario_boleto) != r.raiz:
+        rb = raiz(r.cnpj_beneficiario_boleto) if pd.notna(r.cnpj_beneficiario_boleto) else ""
+        if rb and rb != r.raiz and ((b.nfs.raiz == rb) & (b.nfs.nf_norm == r.nf_norm)).any():
+            continue  # o boleto é do emitente real da NF: o erro é o fornecedor do título (tres_vias trata)
+        if rb and rb != r.raiz:
             dono = b.fornecedores[b.fornecedores.raiz == raiz(r.cnpj_beneficiario_boleto)]
             ev.append(f"beneficiário do boleto CNPJ {r.cnpj_beneficiario_boleto} ≠ fornecedor {r.razao_social} "
                       f"({'cadastro: ' + dono.razao_social.iloc[0] if len(dono) else 'CNPJ fora do cadastro'})")

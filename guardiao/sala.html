@@ -2,14 +2,17 @@
 <html lang="pt-br">
 <head>
 <meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
+@font-face{font-family:Inter;src:url(/assets/fonts/Inter-Regular.otf);font-weight:400}
+@font-face{font-family:Inter;src:url(/assets/fonts/Inter-Medium.otf);font-weight:500}
+@font-face{font-family:Inter;src:url(/assets/fonts/Inter-SemiBold.otf);font-weight:600}
+@font-face{font-family:Inter;src:url(/assets/fonts/Inter-Bold.otf);font-weight:700}
 :root{
-  --bg:#070b14; --panel:#0d1424; --panel2:#111a2e; --line:#1d2840; --line2:#26334f;
-  --txt:#e6ebf5; --mut:#8391ab; --dim:#5b6782;
-  --lime:#d4e000; --red:#ff5d5d; --amber:#ffb547; --blue:#5b8cff; --violet:#a58bff; --green:#39d98a;
-  --sent:#c9d2e3;
+  --bg:#f6f5f1; --panel:#ffffff; --panel2:#fbfaf7; --line:#e7e6e1; --line2:#d9d8d2;
+  --txt:#111111; --mut:#6b6e75; --dim:#9a9ca1;
+  --lime:#111111; --red:#d93a3a; --amber:#b07a00; --blue:#3060d0; --violet:#7a5ad6; --green:#1f8a55;
+  --sent:#111111;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;font-size:13px;overflow:hidden}
@@ -22,15 +25,15 @@ html,body{width:100%;background:var(--bg);color:var(--txt);font-family:Inter,sys
 .clock small{display:block;font-size:10px;color:var(--mut);font-weight:500;letter-spacing:.08em;text-transform:uppercase}
 .chip{border:1px solid var(--line2);border-radius:999px;padding:5px 11px;color:var(--mut);white-space:nowrap}
 .chip b{color:var(--txt);font-weight:600}
-.chip.live{border-color:#3a4510;color:var(--lime);background:#141a05}
-.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lime);margin-right:6px;box-shadow:0 0 0 0 #d4e00080;animation:pulse 1.6s infinite}
+.chip.live{border-color:#cfe8d9;color:var(--green);background:#e6f4ec}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;box-shadow:0 0 0 0 #d4e00080;animation:pulse 1.6s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 #d4e00066}70%{box-shadow:0 0 0 8px #d4e00000}100%{box-shadow:0 0 0 0 #d4e00000}}
 .lotes{display:flex;gap:3px;margin-left:auto;flex:1;min-width:80px;justify-content:flex-end}
 .lotes i{flex:1;max-width:16px;min-width:5px;height:6px;border-radius:3px;background:var(--line2);transition:.3s}
 .lotes i.on{background:var(--lime)} .lotes i.cur{background:var(--txt)}
 .ctl{display:flex;gap:6px}
 .btn{background:var(--panel2);border:1px solid var(--line2);color:var(--txt);border-radius:9px;padding:7px 11px;font:600 12px Inter;cursor:pointer}
-.btn:hover{border-color:var(--mut)} .btn.pri{background:var(--lime);color:#0b0f00;border-color:var(--lime)}
+.btn:hover{border-color:var(--mut)} .btn.pri{background:#111;color:#fff;border-color:#111}
 .btn.sel{border-color:var(--lime);color:var(--lime)}
 
 /* main */
@@ -43,7 +46,7 @@ html,body{width:100%;background:var(--bg);color:var(--txt);font-family:Inter,sys
 .lote-meta{color:var(--mut);font-size:11.5px;margin:2px 0 10px}
 .grid{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;align-content:start}
 .grid span{aspect-ratio:1;border-radius:2px;background:var(--line);transition:background .25s,transform .25s}
-.grid span.ok{background:#1f5e40} .grid span.bad{background:var(--red);transform:scale(1.25);box-shadow:0 0 8px #ff5d5d99}
+.grid span.ok{background:#bfe0cc} .grid span.bad{background:var(--red);transform:scale(1.25)}
 .grid span.scan{background:var(--lime)}
 .leg{display:flex;gap:10px;color:var(--mut);font-size:11px;margin-top:10px}
 .leg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
@@ -54,29 +57,29 @@ html,body{width:100%;background:var(--bg);color:var(--txt);font-family:Inter,sys
 .room{position:relative;display:grid;grid-template-rows:auto 1fr;gap:34px;padding:6px}
 svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 .wire{stroke:var(--line2);stroke-width:1.5;fill:none}
-.wire.go{stroke:var(--lime);stroke-width:2;stroke-dasharray:6 6;animation:dash .6s linear infinite}
+.wire.go{stroke:#111;stroke-width:2;stroke-dasharray:6 6;animation:dash .6s linear infinite}
 @keyframes dash{to{stroke-dashoffset:-12}}
 .agents{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;z-index:1}
 .agent{position:relative;z-index:1;background:var(--panel2);border:1px solid var(--line2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:212px;transition:border-color .25s,box-shadow .25s}
 .agent.sent{width:min(560px,100%);margin:0 auto;min-height:0}
-.agent.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 10px 40px -12px var(--c)}
+.agent.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 12px 30px -18px rgba(17,17,17,.35)}
 .ahead{display:flex;align-items:center;gap:10px}
-.av{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#0a0d14;background:var(--c);font-size:14px}
+.av{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:700;color:#fff;background:var(--c);font-size:14px}
 .an{font-weight:700;font-size:14px} .ar{color:var(--mut);font-size:11px}
-.st{margin-left:auto;font-size:10.5px;font-weight:600;border-radius:999px;padding:3px 8px;background:#1a2338;color:var(--mut)}
-.agent.on .st{background:var(--c);color:#0a0d14}
-.think{color:#c3cbe0;line-height:1.45;min-height:38px;font-size:12.5px}
+.st{margin-left:auto;font-size:10.5px;font-weight:600;border-radius:999px;padding:3px 8px;background:#efeee9;color:var(--mut)}
+.agent.on .st{background:var(--c);color:#fff}
+.think{color:#2b2d31;line-height:1.45;min-height:38px;font-size:12.5px}
 .think .cur{display:inline-block;width:6px;height:13px;background:var(--c);vertical-align:-2px;margin-left:2px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
-.call{font-size:11.5px;background:#080d18;border:1px solid var(--line);border-radius:9px;padding:8px 9px;color:var(--mut);min-height:52px;word-break:break-word}
+.call{font-size:11.5px;background:#f3f2ee;border:1px solid var(--line);border-radius:9px;padding:8px 9px;color:var(--mut);min-height:52px;word-break:break-word}
 .call .fn{color:var(--c);font-weight:600} .call .arg{color:var(--txt)}
 .call .tag{float:right;font-family:Inter;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px}
-.tag.auto{background:#13301f;color:var(--green)} .tag.aprovacao{background:#33270b;color:var(--amber)} .tag.humano{background:#33270b;color:var(--amber)}
+.tag.auto{background:#e6f4ec;color:var(--green)} .tag.aprovacao{background:#faf2dc;color:var(--amber)} .tag.humano{background:#faf2dc;color:var(--amber)}
 .ameta{display:flex;gap:12px;color:var(--dim);font-size:11px;margin-top:auto}
 .ameta b{color:var(--txt)}
-.case{border-left:3px solid var(--red);background:#1a0f14;border-radius:8px;padding:8px 10px;font-size:12px;display:none}
+.case{border-left:3px solid var(--red);background:#fbeceb;border-radius:8px;padding:8px 10px;font-size:12px;display:none}
 .case.show{display:block;animation:in .35s}
-.case .ct{font-weight:700;color:#ffd0d0} .case .cv{color:var(--mut);margin-top:2px}
+.case .ct{font-weight:700;color:#a12b2b} .case .cv{color:var(--mut);margin-top:2px}
 @keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* human channel */
@@ -92,26 +95,26 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 
 /* bottom */
 .bottom{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
-.term{background:#05080f;border:1px solid var(--line);border-radius:14px;padding:10px 12px;height:150px;overflow:hidden;font-size:11.5px;line-height:1.6;display:flex;flex-direction:column;justify-content:flex-end}
+.term{background:#ffffff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;height:150px;overflow:hidden;font-size:11.5px;line-height:1.6;display:flex;flex-direction:column;justify-content:flex-end}
 .term div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mut);animation:in .25s}
 .term .ts{color:var(--dim)} .term .who{font-weight:600} .term .f{color:var(--txt)}
 .kpis{display:grid;grid-template-columns:repeat(2,160px);gap:10px}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .kpi .l{font-size:10px;color:var(--mut);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
 .kpi .v{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-top:3px;font-variant-numeric:tabular-nums}
-.kpi.big .v{color:var(--lime)}
-.done{position:absolute;inset:0;display:none;place-items:center;background:#070b14e6;z-index:5;border-radius:14px}
+.kpi.big .v{color:var(--green)}
+.done{position:absolute;inset:0;display:none;place-items:center;background:rgba(246,245,241,.94);z-index:5;border-radius:14px}
 .done.show{display:grid;animation:in .4s}
 .done .box{text-align:center} .done h2{font-size:30px;letter-spacing:-.03em} .done p{color:var(--mut);margin-top:6px}
 .done .vs{display:flex;gap:28px;justify-content:center;margin-top:18px}
-.done .vs div b{display:block;font-size:26px} .done .vs .r b{color:var(--red)} .done .vs .g b{color:var(--lime)}
+.done .vs div b{display:block;font-size:26px} .done .vs .r b{color:var(--red)} .done .vs .g b{color:var(--green)}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="clock mono" id="clock">02/11 08:00<small>relógio do ambiente</small></div>
-    <span class="chip live"><span class="dot"></span>agentes em operação</span>
+    <span class="chip live"><span class="dot"></span>ao vivo</span>
     <span class="chip">lote <b id="tLote">—</b></span>
     <span class="chip">fecha <b id="tFecha">—</b></span>
     <div class="lotes" id="lotes"></div>
@@ -173,7 +176,7 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
     </div>
 
     <div class="card">
-      <div class="h">Canal humano · Telegram <span id="hN" class="mono">0</span></div>
+      <div class="h">Pessoas · Telegram <span id="hN" class="mono">0</span></div>
       <div class="phone" id="phone"><div class="empty">Quando a decisão não cabe ao agente,<br>ele chama a pessoa certa aqui.</div></div>
     </div>
   </div>
@@ -192,7 +195,7 @@ svg.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z
 <script>
 const D = __DATA__;
 const E = D.eventos;
-const COR = {Sentinela:'#c9d2e3', Analista:'#5b8cff', Auditor:'#ff5d5d', Leitor:'#a58bff', Humano:'#ffb547'};
+const COR = {Sentinela:'#111111', Analista:'#3060d0', Auditor:'#d93a3a', Leitor:'#7a5ad6', Humano:'#b07a00'};
 const brl = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
 const $ = id => document.getElementById(id);
 let i=0, speed=2, playing=false, timer=null;
@@ -253,7 +256,7 @@ function run(e){
     log('Sentinela','listar_agenda_remessa',`${e.lote} · ${e.n} títulos · ${brl(e.valor)}`);
   }
   else if(e.t==='pensa'){
-    setOn(e.agente, 'raciocinando'); type($('ag-'+e.agente).querySelector('.think'), e.texto, dur*0.8/speed);
+    setOn(e.agente, 'pensando'); type($('ag-'+e.agente).querySelector('.think'), e.texto, dur*0.8/speed);
     if(e.agente!=='Sentinela') wires([e.agente]); tick(1);
   }
   else if(e.t==='confere'){
@@ -268,7 +271,7 @@ function run(e){
   else if(e.t==='achado'){
     const a=$('ag-'+e.agente); setOn(e.agente,'achou problema'); wires([e.agente]);
     type(a.querySelector('.think'), e.texto, dur*0.7/speed);
-    const cs=a.querySelector('.case'); cs.innerHTML=`<div class="ct">${escape(e.caso.tipo)} · ${escape(e.caso.titulo)}</div><div class="cv">${escape(e.caso.fornecedor)} · ${brl(e.caso.valor)}${e.caso.perda?` · <b style="color:#ff9b9b">${brl(e.caso.perda)} em risco</b>`:''}</div>`;
+    const cs=a.querySelector('.case'); cs.innerHTML=`<div class="ct">${escape(e.caso.tipo)} · ${escape(e.caso.titulo)}</div><div class="cv">${escape(e.caso.fornecedor)} · ${brl(e.caso.valor)}${e.caso.perda?` · <b style="color:#d93a3a">${brl(e.caso.perda)} em risco</b>`:''}</div>`;
     cs.classList.remove('show'); void cs.offsetWidth; cs.classList.add('show');
     const cell=$('grid').querySelector(`[data-t="${e.caso.titulo}"]`); if(cell) cell.className='bad';
     if(!S.contados.has(e.caso.id)){ S.contados.add(e.caso.id); S.R+=e.caso.perda; S.ret++; S.agR[e.agente]=(S.agR[e.agente]||0)+e.caso.perda;
@@ -278,9 +281,9 @@ function run(e){
   else if(e.t==='tool'){
     const a=$('ag-'+e.agente); if(!a) return dur;
     setOn(e.agente, e.modo==='auto'?'executando':'pedindo aprovação'); wires([e.agente]);
-    a.querySelector('.call').innerHTML=`<span class="tag ${e.modo}">${e.modo==='auto'?'AGIU SOZINHO':'CHAMOU HUMANO'}</span><span class="fn">${escape(e.ferramenta)}</span>(<span class="arg">${escape(e.alvo)}</span>)<br>${escape(e.detalhe)}`;
+    a.querySelector('.call').innerHTML=`<span class="tag ${e.modo}">${e.modo==='auto'?'FEZ SOZINHO':'CHAMOU PESSOA'}</span><span class="fn">${escape(e.ferramenta)}</span>(<span class="arg">${escape(e.alvo)}</span>)<br>${escape(e.detalhe)}`;
     if(e.modo==='auto'){S.A++; S.agN[e.agente]=(S.agN[e.agente]||0)+1; a.querySelector('.n').textContent=S.agN[e.agente];}
-    if(e.caso){ const cs=a.querySelector('.case'); if(cs){ cs.innerHTML=`<div class="ct">${escape(e.caso.tipo)} · ${escape(e.caso.titulo)}</div><div class="cv">${escape(e.caso.fornecedor)} · ${brl(e.caso.valor)}${e.caso.perda?` · <b style="color:#ff9b9b">${brl(e.caso.perda)} em risco</b>`:''}</div>`; cs.classList.add('show'); } }
+    if(e.caso){ const cs=a.querySelector('.case'); if(cs){ cs.innerHTML=`<div class="ct">${escape(e.caso.tipo)} · ${escape(e.caso.titulo)}</div><div class="cv">${escape(e.caso.fornecedor)} · ${brl(e.caso.valor)}${e.caso.perda?` · <b style="color:#d93a3a">${brl(e.caso.perda)} em risco</b>`:''}</div>`; cs.classList.add('show'); } }
     if(e.caso && !S.contados.has(e.caso.id)){ S.contados.add(e.caso.id); S.R+=e.caso.perda; S.ret++; S.agR[e.agente]=(S.agR[e.agente]||0)+e.caso.perda;
       a.querySelector('.r') && (a.querySelector('.r').textContent=brl(S.agR[e.agente]));
       const cell=$('grid').querySelector(`[data-t="${e.caso.titulo}"]`); if(cell) cell.className='bad'; }

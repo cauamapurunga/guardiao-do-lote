@@ -1,0 +1,163 @@
+{
+ "ok": true,
+ "itens": [
+  {
+   "ok": true,
+   "texto": "54 títulos com problema em 876 da agenda: possível golpe 25, nota lançada duas vezes 13, valor digitado errado 8, pagamento em dobro 3, empresa errada 2, compra não aprovada 2, boleto de outra empresa 1",
+   "secao": "Base do desafio"
+  },
+  {
+   "ok": true,
+   "texto": "860 títulos conferidos, 0 alertas (nenhum falso positivo)",
+   "secao": "Base sem problemas: zero alarmes falsos"
+  },
+  {
+   "ok": true,
+   "texto": "Possível golpe: 143/143 detectados com o tipo certo",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "Nota lançada duas vezes: 10/10 detectados com o tipo certo",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "Valor digitado errado: 10/10 detectados com o tipo certo",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "Pagamento em dobro: 10/10 detectados com o tipo certo",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "Empresa errada: 10/10 detectados com o tipo certo",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "Compra não aprovada: 10/10 detectados com o tipo certo",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "Boleto de outra empresa: 10/10 detectados com o tipo certo",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "alertas que não deviam existir: 0",
+   "secao": "Problemas novos em 10 sorteios"
+  },
+  {
+   "ok": true,
+   "texto": "54 títulos com problema, mesmos tipos e mesmos títulos (traduzidos) que a base original",
+   "secao": "Dados embaralhados: nada decorado"
+  },
+  {
+   "ok": true,
+   "texto": "texto fiel às evidências é aceito",
+   "secao": "IA não inventa dados"
+  },
+  {
+   "ok": true,
+   "texto": "valor inventado (R$ 11.808,60 no lugar de R$ 1.180,86) é barrado",
+   "secao": "IA não inventa dados"
+  },
+  {
+   "ok": true,
+   "texto": "número de título inventado é barrado",
+   "secao": "IA não inventa dados"
+  },
+  {
+   "ok": true,
+   "texto": "a IA nunca decide pagamento: quem retira, cancela ou bloqueia são as regras das políticas",
+   "secao": "IA não inventa dados"
+  }
+ ],
+ "sorteios": [
+  {
+   "seed": 1,
+   "injetados": 44,
+   "certos": 44,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 2,
+   "injetados": 9,
+   "certos": 9,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 3,
+   "injetados": 8,
+   "certos": 8,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 4,
+   "injetados": 8,
+   "certos": 8,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 5,
+   "injetados": 9,
+   "certos": 9,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 6,
+   "injetados": 15,
+   "certos": 15,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 7,
+   "injetados": 34,
+   "certos": 34,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 8,
+   "injetados": 8,
+   "certos": 8,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 9,
+   "injetados": 34,
+   "certos": 34,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  },
+  {
+   "seed": 10,
+   "injetados": 34,
+   "certos": 34,
+   "errado": 0,
+   "perdidos": 0,
+   "extras": 0
+  }
+ ],
+ "quando": "07/11 10:51"
+}
