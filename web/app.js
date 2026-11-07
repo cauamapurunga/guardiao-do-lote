@@ -48,6 +48,7 @@ function render() {
   }
   $('#quadro').style.setProperty('--dias', dias.length);
   $('#quadro').innerHTML = q;
+  $('#btnVoltar').style.display = E.simulacao ? '' : 'none';
   $('#conferido').textContent = E.simulacao
     ? `Dia simulado: ${E.simulacao.injetados} problemas novos sorteados, ${E.simulacao.pegos} pegos pelos agentes · conferido ${E.conferido_em}`
     : `Última conferência: ${E.conferido_em || '—'} · confere sozinho de hora em hora`;
@@ -254,6 +255,14 @@ if ($('#btnResumo')) $('#btnResumo').onclick = async () => {
   toast(r.ok ? 'Resumo enviado no Telegram.' : (j.detail || 'Não deu para enviar'));
 };
 
+$('#btnVoltar').onclick = async () => {
+  const b = $('#btnVoltar'); b.classList.add('loading'); b.textContent = 'Voltando…';
+  const r = await fetch('/api/reiniciar', {method: 'POST'});
+  b.classList.remove('loading'); b.textContent = 'Voltar aos dados do desafio';
+  if (!r.ok) return toast('Não deu para voltar. Feche e abra o servidor de novo.');
+  $('#sala').removeAttribute('src');
+  toast('De volta aos dados do desafio: 876 títulos, 17 lotes.'); carregar();
+};
 $('#btnSimular').onclick = async () => {
   const b = $('#btnSimular'); b.classList.add('loading'); b.textContent = 'Sorteando problemas novos…';
   const r = await fetch('/api/simular', {method: 'POST'}); const j = await r.json();

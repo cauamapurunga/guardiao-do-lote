@@ -10,6 +10,7 @@ Humanos entram por solicitar_aprovacao / acionar_pessoa (Telegram).
 from __future__ import annotations
 
 import collections
+import re
 import datetime as dt
 from dataclasses import asdict, dataclass, field
 
@@ -44,6 +45,7 @@ COMPRADOR_PESSOA = {"Carla Menezes": "PS04", "Diego Prado": "PS05"}
 CUSTO_RELACIONAMENTO = {"produto": 3000, "frete": 1500, "embalagens": 800, "insumos_capa": 800, "aluguel": 500,
                         "ti_saas": 400, "utilidades": 400, "servicos": 300, "marketing_agencia": 300, "influenciador": 250}
 CUSTO_ACIONAMENTO = 60.0
+MULTA, JUROS_MES = 0.02, 0.01
 
 
 @dataclass
@@ -79,10 +81,50 @@ class Caso:
     aprovacao: dict | None = None     # {pessoa, acao, valor}
 
 
+def aplicar_politicas(b: Bases) -> None:
+    """Lê alçadas, pessoas e custos de politicas.csv (os valores acima são só o padrão se faltar alguma linha).
+    Mudou a política, muda o agente, sem mexer no código."""
+    global ALCADA_ANALISTA, ALCADA_APROVADOR, CUSTO_ACIONAMENTO, MULTA, JUROS_MES
+    pol = b.politicas
+    if pol is None or pol.empty:
+        return
+    v = {(str(r.secao), str(r.regra)): r.valor for r in pol.itertuples()}
+
+    def num(chave, padrao):
+        try:
+            return float(v[chave])
+        except (KeyError, TypeError, ValueError):
+            return padrao
+    ALCADA_ANALISTA = num(("alcadas", "analista_cp.cancelar_ate"), ALCADA_ANALISTA)
+    ALCADA_APROVADOR = num(("alcadas", "aprovador.aprova_ate"), ALCADA_APROVADOR)
+    CUSTO_ACIONAMENTO = num(("acionamento_humano", "custo_por_acionamento_desnecessario"), CUSTO_ACIONAMENTO)
+    MULTA = num(("atraso", "multa"), MULTA)
+    JUROS_MES = num(("atraso", "juros_ao_mes"), JUROS_MES)
+    for (sec, regra), val in v.items():
+        if sec == "atraso" and regra.startswith("custo_de_relacionamento_por_titulo_atrasado."):
+            try:
+                CUSTO_RELACIONAMENTO[regra.split(".", 1)[1]] = float(val)
+            except (TypeError, ValueError):
+                pass
+    # pessoas que o agente pode acionar: pessoas[i].pessoa_id / nome / cargo
+    tmp: dict[str, dict] = {}
+    for (sec, regra), val in v.items():
+        m = re.match(r"pessoas\[(\d+)\]\.(pessoa_id|nome|cargo)$", regra) if sec == "acionamento_humano" else None
+        if m:
+            tmp.setdefault(m.group(1), {})[m.group(2)] = str(val)
+    for p in tmp.values():
+        if p.get("pessoa_id") and p.get("nome"):
+            cargo = p.get("cargo", "").replace(" (", " · ").replace(")", "")
+            PESSOAS[p["pessoa_id"]] = f"{p['nome']} ({cargo})" if cargo else p["nome"]
+    from . import regras_extra
+    regras_extra.ALCADA_ANALISTA = ALCADA_ANALISTA
+
+
 class Guardiao:
     """Estado simulado do ERP + log de ações dos agentes."""
 
     def __init__(self, b: Bases):
+        aplicar_politicas(b)
         self.b = b
         self.titulo_status = {t: "agendado" for t in b.agenda.titulo_id}
         self.fornecedores_bloqueados: set[str] = set()
@@ -326,7 +368,7 @@ class Guardiao:
         for c in self.casos:
             legitimo = c.tipo in ("OC_INVALIDA",) and c.perda_evitada == 0
             if legitimo:
-                atraso += c.valor * (0.02 + 0.01 * 7 / 30) + CUSTO_RELACIONAMENTO.get(self.forn_cat.get(c.fornecedor_id), 300)
+                atraso += c.valor * (MULTA + JUROS_MES * 7 / 30) + CUSTO_RELACIONAMENTO.get(self.forn_cat.get(c.fornecedor_id), 300)
         custo_acion = CUSTO_ACIONAMENTO * len(acion)
         tipos = collections.Counter(c.tipo for c in self.casos)
         perdas_tipo = collections.defaultdict(float)
