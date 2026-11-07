@@ -185,7 +185,7 @@ $('#btnTg').onclick = async () => {
   const r = await fetch('/api/telegram/enviar', {method: 'POST'});
   $('#btnTg').classList.remove('loading'); $('#btnTg').textContent = 'Enviar para o Telegram';
   const j = await r.json();
-  toast(r.ok ? `${j.enviados} cards enviados para o Telegram.` : (j.detail || 'Não deu para enviar.'));
+  toast(r.ok ? `Enviado no Telegram: ${Object.entries(j.por_pessoa || {}).map(([k, v]) => `${v} para ${k}`).join(', ') || 'nada pendente'}.` : (j.detail || 'Não deu para enviar.'));
 };
 
 carregar().then(() => { const h = location.hash.slice(1); if (h) ir(h); });

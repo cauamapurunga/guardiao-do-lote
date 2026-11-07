@@ -131,3 +131,88 @@ def enviar_card(caso: dict, chat: str | None = None, modo: str = "aprovacao", pa
                       files={"photo": (f"{caso['id']}.png", png, "image/png")}, timeout=30)
     r.raise_for_status()
     return r.json()
+
+
+def enviar_pendentes(g, chat: str | None = None, n: int = 5, pessoas: set | None = None) -> int:
+    """Decisões pendentes no Telegram: 1 mensagem de abertura e, para cada caso, 1 imagem com o resumo,
+    o que acontece se aprovar / se recusar e os botões. Os que saem primeiro do banco vêm antes."""
+    from concurrent.futures import ThreadPoolExecutor
+    from dataclasses import asdict
+    from html import escape
+    from . import ia, leitor_caixa
+    from . import linguagem as L
+
+    from . import contatos
+    pend = [c for c in g.casos if c.status == "aguardando_aprovacao"
+            and (pessoas is None or (c.aprovacao or {}).get("pessoa") in pessoas)]
+    so_uma = contatos.primeiro(next(iter(pessoas))) if pessoas and len(pessoas) == 1 else None
+    if not pend:
+        enviar(f"✅ Nada esperando a sua decisão{', ' + so_uma if so_uma else ''}. O agente resolveu o resto sozinho.", chat)
+        return 0
+    from .agentes import PRIORIDADE
+    grav = lambda t: PRIORIDADE.index(t) if t in PRIORIDADE else len(PRIORIDADE)
+    pend.sort(key=lambda c: (c.fechamento[3:5], c.fechamento[0:2], c.fechamento[6:], grav(c.tipo), -c.valor))
+    vez = pend[:n]
+    parado = sum(c.valor for c in pend)
+    quem = f"{so_uma}, " if so_uma else ""
+    enviar(f"🖐️ <b>{quem}{len(pend)} {'decisões esperando' if len(pend) > 1 else 'decisão esperando'} você</b> · {brl2(parado)} parados fora do lote\n"
+           f"Mando {'as ' + str(len(vez)) + ' que saem' if len(vez) > 1 else 'a que sai'} primeiro do banco.", chat)
+
+    resumos: dict[str, str] = {}
+    if ia.disponivel():                                     # a IA escreve os resumos em paralelo, com limite de tempo
+        ex = ThreadPoolExecutor(max_workers=len(vez))
+        futs = {c.id: ex.submit(leitor_caixa.explicar_caso, asdict(c)) for c in vez}
+        for cid, f in futs.items():
+            try:
+                r = f.result(timeout=25)
+                if r:
+                    resumos[cid] = r
+            except Exception:
+                pass                                         # sem resumo da IA: usa a frase padrão
+        ex.shutdown(wait=False)
+
+    for c in vez:
+        d = asdict(c)
+        t = L.tipo(c.tipo)
+        n_forn = sum(1 for x in g.casos if x.fornecedor_id == c.fornecedor_id)
+        sim, nao = L.consequencias(d, n_forn)
+        resumo = resumos.get(c.id) or t["frase"]
+        if len(resumo) > 420:
+            resumo = resumo[:417].rsplit(" ", 1)[0] + "…"
+        cap = (f"<b>{escape(t['titulo'])}</b> · {brl2(c.valor)}\n{escape(c.fornecedor)} · sai do banco {escape(c.fechamento)}\n\n"
+               f"{escape(resumo)}\n\n✅ <b>Se aprovar:</b> {escape(sim)}\n❌ <b>Se recusar:</b> {escape(nao)}")
+        enviar_card(d, chat, legenda=cap)
+    resto = len(pend) - len(vez)
+    if resto:
+        enviar(f"Faltam {resto}. Decida estas e mande /pendentes de novo, ou veja todas no app (aba Decisões).", chat)
+    return len(vez)
+
+
+def enviar_avisos(g, chat: str | None = None, pessoas: set | None = None) -> int:
+    """Pessoas que o agente acionou (sem precisar aprovar nada): 1 card por caso."""
+    from dataclasses import asdict
+    n = 0
+    for c in g.casos:
+        for x in c.acoes:
+            if x["ferramenta"] == "acionar_pessoa" and (pessoas is None or x["alvo"] in pessoas):
+                enviar_card(asdict(c), chat, "aviso", x["para"], x["detalhe"])
+                n += 1
+                break
+    if not n:
+        enviar("✅ Nenhum aviso para você agora.", chat)
+    return n
+
+
+def rotear_pendentes(g, chat_principal: str | None) -> dict:
+    """Cada pessoa cadastrada (/sou) recebe só as decisões dela; o resto vai para o chat principal."""
+    from . import contatos
+    donos = {(c.aprovacao or {}).get("pessoa") for c in g.casos if c.status == "aguardando_aprovacao"}
+    cad = contatos.cadastrados()
+    enviados = {}
+    for pid in sorted(donos):
+        if pid in cad:
+            enviados[contatos.primeiro(pid)] = enviar_pendentes(g, cad[pid], pessoas={pid})
+    resto = {p for p in donos if p not in cad}
+    if resto and chat_principal:
+        enviados["chat principal"] = enviar_pendentes(g, chat_principal, pessoas=resto)
+    return enviados

@@ -49,7 +49,7 @@ python validar.py            # prova de que está certo (base limpa, problemas n
 python teste_ia.py           # 1 chamada ao Jev + 1 ao chat, com custo
 ```
 
-O que você aprova no Telegram aparece no app na hora, e vice-versa. No Telegram: `/status`, `/lote`, `/pendentes` (cards em imagem com Aprovar/Recusar), `/avisos` ou um número de título.
+O que você aprova no Telegram aparece no app na hora, e vice-versa. No Telegram: `/sou renata` (cada pessoa registra o próprio chat e passa a receber só o que é dela; só ela pode aprovar o que é da alçada dela), `/pendentes` (1 imagem por caso, com o resumo, o que acontece se aprovar/recusar e os botões), `/avisos`, `/status`, `/lote`, `/quem`, `/sair` ou um número de título. Sem ninguém cadastrado, tudo vai para o chat principal.
 
 ## Como sabemos que está certo (`validar.py`)
 

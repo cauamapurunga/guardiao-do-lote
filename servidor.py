@@ -173,12 +173,8 @@ def telegram_enviar():
     if not chat:
         raise HTTPException(400, "Mande /start para o bot no Telegram e tente de novo")
     ESTADO["chat"] = chat
-    n = 0
-    for c in ESTADO["g"].casos:
-        if c.status == "aguardando_aprovacao" and n < 10:
-            tg.enviar_card(asdict(c), chat)
-            n += 1
-    return {"enviados": n}
+    por_pessoa = tg.rotear_pendentes(ESTADO["g"], chat)     # cada um recebe o seu; o resto vai ao chat principal
+    return {"enviados": sum(por_pessoa.values()), "por_pessoa": por_pessoa}
 
 
 @app.get("/api/caixa")

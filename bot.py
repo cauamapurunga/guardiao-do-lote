@@ -10,6 +10,8 @@ Comandos:
   /pendentes    pedidos de aprovação (card em imagem + botões)
   /avisos       pessoas acionadas pelo agente (card em imagem)
   /titulo TP…   situação de um título (ou só mande o número TP… no texto)
+  /sou renata   este chat passa a ser da Renata: /pendentes e /avisos mostram só o que é dela
+  /sair         este chat volta a ver tudo   ·   /quem   quem está cadastrado
 Botões ✅/❌ aplicam a decisão e o agente executa o resto.
 """
 import re
@@ -21,7 +23,7 @@ from guardiao import env  # noqa: F401
 from guardiao import telegram as tg
 from guardiao.agentes import Guardiao
 from guardiao.dados import carregar
-from guardiao import ia, leitor_caixa
+from guardiao import contatos
 
 g = Guardiao(carregar()).executar()
 brl = lambda v: f"R$ {v:,.0f}".replace(",", ".")
@@ -60,15 +62,6 @@ def titulo(tid: str) -> str:
     return f"⚠️ <b>{tid}</b> — {c.resumo}\nSituação no ERP: <b>{st}</b> · caso {c.id}: {c.status}\n{ev}"
 
 
-def resumos_ia(casos, chat):
-    """Em paralelo ao bot: a IA escreve o resumo de cada caso para quem aprova."""
-    for c in casos:
-        try:
-            tg.enviar(f"🧠 <b>Em poucas palavras · {c.id}</b>\n{leitor_caixa.explicar_caso(asdict(c))}", chat)
-        except Exception as e:
-            print("IA indisponível:", e)
-
-
 def main():
     offset = None
     chats = set()
@@ -85,9 +78,16 @@ def main():
             if "callback_query" in u:
                 cq = u["callback_query"]
                 acao, cid = cq["data"].split(":", 1)
-                quem = cq["from"].get("first_name", "?")
-                c = g.decidir(cid, acao == "ap", f"{quem} (Telegram)")
                 resp = {"callback_id": cq["id"], "chat": cq["message"]["chat"]["id"], "message_id": cq["message"]["message_id"]}
+                eu = contatos.pessoa_do_chat(resp["chat"])
+                caso = next((x for x in g.casos if x.id == cid), None)
+                dono = (caso.aprovacao or {}).get("pessoa") if caso else None
+                if eu and dono and eu != dono:            # só quem tem a alçada decide
+                    tg._call("answerCallbackQuery", callback_query_id=cq["id"], show_alert=True,
+                             text=f"Esta decisão é de {contatos.primeiro(dono)}. Você está cadastrado como {contatos.primeiro(eu)}.")
+                    continue
+                quem = contatos.nome(eu).split("(")[0].strip() if eu else cq["from"].get("first_name", "?")
+                c = g.decidir(cid, acao == "ap", f"{quem} (Telegram)")
                 txt = (f"{'✅ Aprovado' if acao == 'ap' else '❌ Recusado'} por {quem}: {c.resumo}\n"
                        f"Agente executou: " + ", ".join(a["ferramenta"] for a in c.acoes[-3:])) if c else "Caso não encontrado."
                 tg.confirmar_clique(resp, txt)
@@ -99,8 +99,31 @@ def main():
             chats.add(chat)
             texto = m["text"].strip()
             tid = re.search(r"TP\d{6}", texto.upper())
+            eu = contatos.pessoa_do_chat(chat)
+            so_eu = {eu} if eu else None
             if texto.startswith("/start"):
-                tg.enviar(status() + f"\n\n(seu chat_id: <code>{chat}</code>)", chat)
+                tg.enviar(status() + "\n\nQuem é você? Mande <b>/sou</b> e o seu nome (ex.: /sou renata) "
+                          "para receber só o que é seu.", chat)
+            elif texto.startswith("/sou"):
+                arg = texto[4:].strip()
+                pid = contatos.achar_pessoa(arg)
+                if not pid:
+                    lista = "\n".join(f"• /sou {contatos.primeiro(p).lower()} — {contatos.nome(p)}" for p in contatos.PESSOAS)
+                    tg.enviar(("Não achei essa pessoa. " if arg else "") + "Quem é você?\n" + lista, chat)
+                else:
+                    contatos.registrar(chat, pid)
+                    n = sum(1 for c in g.casos if c.status == "aguardando_aprovacao" and (c.aprovacao or {}).get("pessoa") == pid)
+                    tg.enviar(f"👋 Pronto, <b>{contatos.nome(pid)}</b>. Daqui em diante este chat recebe só o que é seu.\n"
+                              f"Você tem {n} {'decisão esperando' if n == 1 else 'decisões esperando'} → /pendentes · avisos → /avisos\n"
+                              f"(para voltar a ver tudo: /sair)", chat)
+            elif texto.startswith("/sair"):
+                pid = contatos.sair(chat)
+                tg.enviar(f"Ok, este chat não é mais de {contatos.primeiro(pid)}. Volta a ver tudo." if pid
+                          else "Este chat não estava cadastrado para ninguém.", chat)
+            elif texto.startswith("/quem"):
+                cad = contatos.cadastrados()
+                tg.enviar("<b>Quem está no Telegram</b>\n" + ("\n".join(f"• {contatos.nome(p)}" for p in cad) or "ninguém cadastrado ainda")
+                          + (f"\n\nEste chat: {contatos.nome(eu)}" if eu else "\n\nEste chat: vê tudo"), chat)
             elif texto.startswith("/resumo"):
                 from guardiao import resumo as R
                 tg.enviar(R.resumo_do_dia(g), chat)
@@ -109,23 +132,13 @@ def main():
             elif texto.startswith("/lote"):
                 tg.enviar(lotes(), chat)
             elif texto.startswith("/pendentes"):
-                pend = [c for c in g.casos if c.status == "aguardando_aprovacao"]
-                for c in pend[:10]:
-                    tg.enviar_card(asdict(c), chat)          # card em imagem + botões, chega na hora
-                if pend and ia.disponivel():
-                    threading.Thread(target=resumos_ia, args=(pend[:10], chat), daemon=True).start()
-                if not pend:
-                    tg.enviar("Nada pendente. 🎉", chat)
+                tg.enviar_pendentes(g, chat, pessoas=so_eu)   # 1 abertura + 1 imagem com resumo e botões por caso
             elif texto.startswith("/avisos"):
-                for c in g.casos:
-                    for x in c.acoes:
-                        if x["ferramenta"] == "acionar_pessoa":
-                            tg.enviar_card(asdict(c), chat, "aviso", x["para"], x["detalhe"])
-                            break
+                tg.enviar_avisos(g, chat, pessoas=so_eu)
             elif tid:
                 tg.enviar(titulo(tid.group(0)), chat)
             else:
-                tg.enviar("Posso: /resumo · /status · /lote · /pendentes · /avisos · ou mande um número de título (TP…).", chat)
+                tg.enviar("Posso: /sou (quem é você) · /pendentes · /avisos · /resumo · /status · /lote · ou mande um número de título (TP…).", chat)
 
 
 if __name__ == "__main__":
